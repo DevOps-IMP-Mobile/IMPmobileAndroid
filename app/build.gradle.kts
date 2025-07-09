@@ -56,4 +56,13 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+
+    // 모듈 의존성 추가
+    implementation(project(":core:ui"))
+    implementation(project(":feature:login"))
+    implementation(project(":feature:home"))
+
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.7.5")
 }
