@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    // alias(libs.plugins.hilt)  <- 이 줄 주석처리
+    // alias(libs.plugins.hilt)  
 }
 
 android {
@@ -40,9 +40,15 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    // 일단 기본만
-    // implementation(libs.retrofit)
-    // implementation(libs.retrofit.kotlinx.serialization)
-    // implementation(libs.okhttp.logging)
-    // implementation(libs.hilt.android)
+
+    // Gson Converter 추가
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
+
+    // Network
+    implementation(libs.retrofit)
+    implementation(libs.okhttp.logging)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
 }
