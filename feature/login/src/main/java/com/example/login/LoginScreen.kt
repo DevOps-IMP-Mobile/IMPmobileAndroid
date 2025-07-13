@@ -1,16 +1,20 @@
 package com.example.login
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.login.LoginViewModel
+import com.example.ui.R
 
 @Composable
 fun LoginScreen(
@@ -19,7 +23,6 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // 로그인 성공 시 네비게이션
     LaunchedEffect(uiState.isLoggedIn) {
         if (uiState.isLoggedIn) {
             onLoginSuccess()
@@ -33,6 +36,16 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // 로고 이미지 추가
+        Image(
+            painter = painterResource(id = R.drawable.logo), // 로고 파일명에 맞게 변경
+            contentDescription = "앱 로고",
+            modifier = Modifier
+                .size(340.dp) // 크기 조정
+                .padding(bottom = 16.dp),
+            contentScale = ContentScale.Fit
+        )
+
         Text(
             text = "로그인",
             style = MaterialTheme.typography.headlineLarge,
@@ -64,15 +77,14 @@ fun LoginScreen(
             enabled = !uiState.isLoading
         )
 
-        // 에러 메시지 표시
-                uiState.error?.let { errorMessage ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+        uiState.error?.let { errorMessage ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
 
         Spacer(modifier = Modifier.height(24.dp))
 
