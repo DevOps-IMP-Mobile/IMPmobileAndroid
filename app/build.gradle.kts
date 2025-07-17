@@ -82,6 +82,9 @@ dependencies {
     implementation(project(":core:data")) // data 모듈 추가
     implementation(project(":feature:login"))
     implementation(project(":feature:home"))
+    implementation(project(":feature:project"))
+    implementation(project(":feature:issue"))
+    implementation(project(":feature:profile"))
 
     // firebase BOM
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))

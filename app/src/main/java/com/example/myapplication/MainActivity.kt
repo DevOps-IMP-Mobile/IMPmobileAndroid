@@ -12,11 +12,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.ui.theme.MyApplicationTheme
-import com.example.home.HomeScreen
 import com.example.login.LoginScreen
-import dagger.hilt.android.AndroidEntryPoint // 🔥 이 import 추가
+import com.example.myapplication.navigation.MainScreen // 추가
+import com.example.myapplication.navigation.Screen // 추가
+import dagger.hilt.android.AndroidEntryPoint
 
-@AndroidEntryPoint // 🔥 이 어노테이션 추가 - 가장 중요!
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,23 +40,25 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = Screen.Login.route // Screen.Login 사용
     ) {
-        composable("login") {
+        // 로그인 화면
+        composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
+                    navController.navigate("main") {
+                        popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
             )
         }
 
-        composable("home") {
-            HomeScreen(
+        // 메인 화면 (바텀 네비게이션 포함)
+        composable("main") {
+            MainScreen(
                 onLogout = {
-                    navController.navigate("login") {
-                        popUpTo("home") { inclusive = true }
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo("main") { inclusive = true }
                     }
                 }
             )
