@@ -9,8 +9,7 @@ jobs:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
-    - name: Push to GitLab
+    - name: Force Push to GitLab
       run: |
         git remote add gitlab https://oauth2:${{ secrets.GITLAB_TOKEN }}@gitlab.com/pmsplus/iqplus-devops/cicdplus-mobile.git
-        git fetch gitlab
-        git push gitlab HEAD:${GITHUB_REF#refs/heads/}
+        git push gitlab HEAD:${GITHUB_REF#refs/heads/} --force
