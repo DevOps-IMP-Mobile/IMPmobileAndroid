@@ -7,10 +7,10 @@ plugins {
 
 android {
     namespace = "com.example.data"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
-        minSdk = 35
+        minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -53,5 +53,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
 
     // firebase BOM
-    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
 }

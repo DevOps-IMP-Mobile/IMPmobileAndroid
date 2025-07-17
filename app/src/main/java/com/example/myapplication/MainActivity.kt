@@ -13,8 +13,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.ui.theme.MyApplicationTheme
 import com.example.login.LoginScreen
-import com.example.myapplication.navigation.MainScreen // 추가
-import com.example.myapplication.navigation.Screen // 추가
+import com.example.myapplication.navigation.MainScreen
+import com.example.myapplication.navigation.Screen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -40,7 +40,7 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route // Screen.Login 사용
+        startDestination = Screen.Login.route
     ) {
         // 로그인 화면
         composable(Screen.Login.route) {

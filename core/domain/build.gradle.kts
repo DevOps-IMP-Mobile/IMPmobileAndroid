@@ -19,5 +19,5 @@ dependencies {
     implementation(libs.javax.inject) // DI 어노테이션용
 
     // firebase BOM
-    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
 }

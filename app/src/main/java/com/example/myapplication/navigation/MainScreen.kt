@@ -4,64 +4,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.home.HomeScreen
-
-// 임시 화면들 (실제 모듈이 완성되기 전까지 사용)
-@Composable
-fun TempProjectScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "프로젝트 화면",
-            style = MaterialTheme.typography.headlineMedium
-        )
-    }
-}
-
-@Composable
-fun TempIssueScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "이슈 화면",
-            style = MaterialTheme.typography.headlineMedium
-        )
-    }
-}
-
-@Composable
-fun TempProfileScreen(onLogout: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "프로필 화면",
-            style = MaterialTheme.typography.headlineMedium
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("로그아웃")
-        }
-    }
-}
+import com.example.project.ProjectScreen
+import com.example.issue.IssueScreen
+import com.example.profile.ProfileScreen
 
 @Composable
 fun MainScreen(
@@ -84,15 +34,15 @@ fun MainScreen(
             }
 
             composable(Screen.Projects.route) {
-                TempProjectScreen()
+                ProjectScreen() // 파라미터 제거
             }
 
             composable(Screen.Issues.route) {
-                TempIssueScreen()
+                IssueScreen() // 파라미터 제거
             }
 
             composable(Screen.Profile.route) {
-                TempProfileScreen(onLogout = onLogout)
+                ProfileScreen() // 파라미터 제거
             }
         }
     }

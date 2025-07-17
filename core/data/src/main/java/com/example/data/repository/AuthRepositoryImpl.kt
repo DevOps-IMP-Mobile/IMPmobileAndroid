@@ -6,7 +6,7 @@ import com.example.data.mapper.toDomain
 import com.example.data.mapper.toEntity
 import com.example.domain.repository.AuthRepository
 import com.example.domain.model.User
-import com.example.network.NetworkModule
+import com.example.network.api.AuthApiService  // NetworkModule 대신 직접 주입
 import com.example.network.dto.LoginRequestDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -15,10 +15,9 @@ import javax.inject.Singleton
 
 @Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val authApiService: AuthApiService  // Hilt로 주입받기
 ) : AuthRepository {
-
-    private val authApiService = NetworkModule.authApiService
 
     override suspend fun login(userId: String, password: String): Result<String> {
         return try {

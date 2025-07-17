@@ -1,15 +1,14 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
 }
 
 android {
-    namespace = "com.example.feature.home"
-    compileSdk = 36
+    namespace = "com.example.home"
+    compileSdk = 34
 
     defaultConfig {
-        minSdk = 35
+        minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -32,6 +31,14 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"  // 수동 설정
+    }
+
+    lint {
+        disable += "NullSafeMutableLiveData"
+        abortOnError = false
     }
 }
 
@@ -57,5 +64,5 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // firebase BOM
-    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
 }

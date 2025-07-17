@@ -7,10 +7,10 @@ plugins {
 
 android {
     namespace = "com.example.database"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
-        minSdk = 35
+        minSdk = 24
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -48,7 +48,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     // Firebase BOM
-    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
+    implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
 
     // Room 관련 (KSP 사용)
     implementation(libs.room.runtime)
