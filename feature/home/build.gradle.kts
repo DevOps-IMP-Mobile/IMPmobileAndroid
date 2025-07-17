@@ -55,4 +55,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // firebase BOM
+    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
 }

@@ -15,4 +15,7 @@ kotlin {
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.javax.inject)
+
+    // firebase BOM
+    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
 }

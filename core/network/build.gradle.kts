@@ -51,4 +51,7 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
+
+    // firebase BOM
+    implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
 }
