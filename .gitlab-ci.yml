@@ -67,10 +67,11 @@ distribute_firebase:
     - echo $FIREBASE_SERVICE_ACCOUNT | base64 -d > firebase-key.json
     - export GOOGLE_APPLICATION_CREDENTIALS=firebase-key.json
   script:
-    - firebase appdistribution:distribute app/build/outputs/apk/debug/app-debug.apk
-      --app $FIREBASE_APP_ID
-      --groups "testers"
-      --release-notes "GitLab CI/CD 자동 배포 - 커밋: $CI_COMMIT_SHORT_SHA - 브랜치: $CI_COMMIT_REF_NAME"
+    - |
+      firebase appdistribution:distribute app/build/outputs/apk/debug/app-debug.apk \
+        --app $FIREBASE_APP_ID \
+        --groups "testers" \
+        --release-notes "GitLab CI/CD 자동 배포 - 커밋: $CI_COMMIT_SHORT_SHA - 브랜치: $CI_COMMIT_REF_NAME"
   only:
     - main
     - develop
