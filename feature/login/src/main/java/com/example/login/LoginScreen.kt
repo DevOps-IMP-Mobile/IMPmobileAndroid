@@ -12,14 +12,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.login.LoginViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.ui.R
 
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
-    viewModel: LoginViewModel = viewModel()
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -36,12 +35,12 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 로고 이미지 추가
+        // 로고 이미지
         Image(
-            painter = painterResource(id = R.drawable.logo), // 로고 파일명에 맞게 변경
+            painter = painterResource(id = R.drawable.logo),
             contentDescription = "앱 로고",
             modifier = Modifier
-                .size(340.dp) // 크기 조정
+                .size(340.dp)
                 .padding(bottom = 16.dp),
             contentScale = ContentScale.Fit
         )

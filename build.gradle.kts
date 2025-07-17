@@ -5,5 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
-    id("com.google.gms.google-services") version "4.4.3" apply false
+    alias(libs.plugins.ksp) apply false // KSP 플러그인 추가
+    alias(libs.plugins.hilt) apply false // Hilt 플러그인 추가
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.kotlin.serialization) apply false // Serialization 플러그인 추가
 }

@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt) // Hilt 추가
 }
 
 android {
@@ -40,11 +42,19 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    // firebase BOM
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    // Firebase BOM
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))
 
+    // Room 관련 (KSP 사용)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
-    // Room 관련은 나중에 추가
-
-
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
 }

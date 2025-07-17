@@ -1,23 +1,31 @@
 package com.example.data.repository
 
 import android.util.Log
+import com.example.database.dao.UserDao
+import com.example.data.mapper.toDomain
+import com.example.data.mapper.toEntity
 import com.example.domain.repository.AuthRepository
 import com.example.domain.model.User
 import com.example.network.NetworkModule
 import com.example.network.dto.LoginRequestDto
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class AuthRepositoryImpl : AuthRepository {
+@Singleton
+class AuthRepositoryImpl @Inject constructor(
+    private val userDao: UserDao
+) : AuthRepository {
 
     private val authApiService = NetworkModule.authApiService
-    private var currentToken: String? = null
-    private var currentUser: User? = null
 
     override suspend fun login(userId: String, password: String): Result<String> {
         return try {
             Log.d("AuthRepository", "로그인 시도 - userId: $userId")
 
             val request = LoginRequestDto(userId = userId, password = password)
-            val response = authApiService.login(request)  // POST 방식 요청
+            val response = authApiService.login(request)
             Log.d("AuthRepository", "응답 성공: $response")
 
             val token = response.token
@@ -26,8 +34,21 @@ class AuthRepositoryImpl : AuthRepository {
                 return Result.failure(Exception("토큰이 없습니다"))
             }
 
-            currentToken = token
-            currentUser = User(userId = userId, token = token)
+            // Room에 사용자 정보 저장/업데이트
+            val existingUser = userDao.getUserById(userId)
+            if (existingUser != null) {
+                // 기존 사용자라면 토큰만 업데이트
+                userDao.updateUserToken(userId, token, System.currentTimeMillis())
+            } else {
+                // 새 사용자라면 기본 정보와 함께 저장
+                val newUser = User(
+                    id = userId,
+                    name = userId, // 기본값으로 userId 사용
+                    token = token,
+                    lastLoginAt = System.currentTimeMillis()
+                )
+                userDao.insertUser(newUser.toEntity())
+            }
 
             Log.d("AuthRepository", "로그인 성공 - token: $token")
             Result.success(token)
@@ -38,22 +59,34 @@ class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-
     override suspend fun logout() {
         Log.d("AuthRepository", "로그아웃")
-        currentToken = null
-        currentUser = null
+        // 현재 로그인된 사용자의 토큰 제거
+        val currentUser = userDao.getLoggedInUser()
+        currentUser?.let {
+            userDao.clearUserToken(it.id)
+        }
     }
 
     override suspend fun getToken(): String? {
-        return currentToken
+        return userDao.getLoggedInUser()?.token
     }
 
     override suspend fun isLoggedIn(): Boolean {
-        return currentToken != null
+        return userDao.getLoggedInUser()?.token != null
     }
 
     override suspend fun getCurrentUser(): User? {
-        return currentUser
+        return userDao.getLoggedInUser()?.toDomain()
+    }
+
+    override fun getCurrentUserFlow(): Flow<User?> {
+        return userDao.getAllUsers().map { users ->
+            users.firstOrNull { it.token != null }?.toDomain()
+        }
+    }
+
+    override suspend fun saveUserToLocal(user: User) {
+        userDao.insertUser(user.toEntity())
     }
 }

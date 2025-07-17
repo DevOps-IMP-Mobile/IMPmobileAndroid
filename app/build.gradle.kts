@@ -2,9 +2,9 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-
-    // firebase
-    id("com.google.gms.google-services")
+    alias(libs.plugins.ksp) // KSP 추가
+    alias(libs.plugins.hilt) // Hilt 추가
+    alias(libs.plugins.google.services) // Google Services
 }
 
 android {
@@ -43,7 +43,6 @@ android {
 }
 
 dependencies {
-
     // SplashScreen API
     implementation("androidx.core:core-splashscreen:1.0.1")
 
@@ -55,6 +54,21 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
+
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -63,14 +77,11 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-
     // 모듈 의존성 추가
     implementation(project(":core:ui"))
+    implementation(project(":core:data")) // data 모듈 추가
     implementation(project(":feature:login"))
     implementation(project(":feature:home"))
-
-    // Navigation
-    implementation("androidx.navigation:navigation-compose:2.7.5")
 
     // firebase BOM
     implementation(platform("com.google.firebase:firebase-bom:33.16.0"))

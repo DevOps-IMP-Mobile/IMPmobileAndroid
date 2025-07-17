@@ -14,7 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.ui.theme.MyApplicationTheme
 import com.example.home.HomeScreen
 import com.example.login.LoginScreen
+import dagger.hilt.android.AndroidEntryPoint // 🔥 이 import 추가
 
+@AndroidEntryPoint // 🔥 이 어노테이션 추가 - 가장 중요!
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
