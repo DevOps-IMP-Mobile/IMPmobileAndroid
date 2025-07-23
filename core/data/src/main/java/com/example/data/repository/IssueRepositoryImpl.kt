@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.domain.model.issue.*
 import com.example.domain.repository.IssueRepository
 import com.example.network.api.IssueApiService
+import com.example.domain.context.UserContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
@@ -17,8 +18,12 @@ class IssueRepositoryImpl @Inject constructor(
     ): Flow<List<Issue>> = flow {
         try {
             Log.d("IssueAPI", "=== 이슈 목록 API 호출 시작 ===")
+            val ctx = UserContext.instance
             val response = issueApi.getMyIssueList(
-                projectNo = filter.projectId,
+                projectNo = filter.projectId ?: ctx.lastProjectNo,
+                spUid = ctx.spUid,
+                loginId = ctx.userId,
+                groupCode = ctx.groupCode
                 // 필요시 추가 파라미터 전달
             )
             Log.d("IssueAPI", "API 성공 - 이슈 개수: ${response.list.size}")

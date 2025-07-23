@@ -6,6 +6,7 @@ import com.example.network.api.AuthApiService
 import com.example.network.api.DashboardApiService
 import com.example.network.api.ProjectApiService
 import com.example.network.api.IssueApiService
+import com.example.network.api.MeApiService
 import com.example.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -80,6 +81,12 @@ object NetworkModule {
     @Singleton
     fun provideProjectApiService(retrofit: Retrofit): ProjectApiService {
         return retrofit.create(ProjectApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMeApiService(retrofit: Retrofit): MeApiService {
+        return retrofit.create(MeApiService::class.java)
     }
 
     // Dashboard 전용 Retrofit (8402 포트)

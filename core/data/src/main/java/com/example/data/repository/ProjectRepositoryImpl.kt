@@ -1,6 +1,7 @@
 package com.example.data.repository
 
 import android.util.Log
+import com.example.domain.context.UserContext
 import com.example.domain.model.project.Project
 import com.example.domain.model.project.ProjectStatus
 import com.example.domain.repository.ProjectRepository
@@ -15,7 +16,12 @@ class ProjectRepositoryImpl @Inject constructor(
     override suspend fun getProjectList(): Flow<List<Project>> = flow {
         try {
             Log.d("ProjectAPI", "=== 프로젝트 목록 API 호출 시작 ===")
-            val response = projectApi.getProjectList()
+            val ctx = UserContext.instance
+            val response = projectApi.getProjectList(
+                userId = ctx.userId,
+                spUid = ctx.spUid,
+                // 필요시 groupCode 등 추가
+            )
             Log.d("ProjectAPI", "API 성공 - 프로젝트 개수: ${response.list.size}")
             val projects = response.list.map { dto ->
                 Project(
