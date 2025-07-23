@@ -58,6 +58,8 @@ android {
     }
 
     dependencies {
+        implementation(project(":core:data"))
+
         // SplashScreen API
         implementation("androidx.core:core-splashscreen:1.0.1")
 

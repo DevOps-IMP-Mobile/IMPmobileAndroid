@@ -2,6 +2,8 @@ package com.example.data.di
 
 import com.example.data.repository.AuthRepositoryImpl
 import com.example.domain.repository.AuthRepository
+import com.example.data.manager.TokenManagerImpl
+import com.example.domain.manager.TokenManager
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,4 +19,10 @@ abstract class RepositoryModule {
     abstract fun bindAuthRepository(
         authRepositoryImpl: AuthRepositoryImpl
     ): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTokenManager(
+        tokenManagerImpl: TokenManagerImpl
+    ): TokenManager
 }

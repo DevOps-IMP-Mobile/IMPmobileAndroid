@@ -43,4 +43,9 @@ dependencies {
 
     // firebase BOM
     implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
+    implementation("javax.inject:javax.inject:1")
+    // Hilt
+    implementation("com.google.dagger:hilt-core:2.48")
 }
