@@ -5,6 +5,8 @@ import com.example.data.repository.DashboardRepositoryImpl
 import com.example.domain.repository.DashboardRepository
 import com.example.data.repository.ProjectRepositoryImpl
 import com.example.domain.repository.ProjectRepository
+import com.example.data.repository.IssueRepositoryImpl
+import com.example.domain.repository.IssueRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -26,4 +28,10 @@ abstract class DataModule {
     abstract fun bindProjectRepository(
         projectRepositoryImpl: ProjectRepositoryImpl
     ): ProjectRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindIssueRepository(
+        issueRepositoryImpl: IssueRepositoryImpl
+    ): IssueRepository
 }

@@ -5,6 +5,7 @@ import com.example.domain.manager.TokenManager
 import com.example.network.api.AuthApiService
 import com.example.network.api.DashboardApiService
 import com.example.network.api.ProjectApiService
+import com.example.network.api.IssueApiService
 import com.example.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -101,5 +102,13 @@ object NetworkModule {
         @Named("dashboard") dashboardRetrofit: Retrofit
     ): DashboardApiService {
         return dashboardRetrofit.create(DashboardApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideIssueApiService(
+        @Named("dashboard") dashboardRetrofit: Retrofit
+    ): IssueApiService {
+        return dashboardRetrofit.create(IssueApiService::class.java)
     }
 }
