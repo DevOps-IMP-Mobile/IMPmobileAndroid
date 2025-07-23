@@ -3,6 +3,8 @@ package com.example.data.di
 
 import com.example.data.repository.DashboardRepositoryImpl
 import com.example.domain.repository.DashboardRepository
+import com.example.data.repository.ProjectRepositoryImpl
+import com.example.domain.repository.ProjectRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,4 +20,10 @@ abstract class DataModule {
     abstract fun bindDashboardRepository(
         dashboardRepositoryImpl: DashboardRepositoryImpl
     ): DashboardRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindProjectRepository(
+        projectRepositoryImpl: ProjectRepositoryImpl
+    ): ProjectRepository
 }
