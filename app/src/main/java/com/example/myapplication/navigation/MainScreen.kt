@@ -42,7 +42,7 @@ fun MainScreen(
             }
 
             composable(Screen.Profile.route) {
-                ProfileScreen() // 파라미터 제거
+                ProfileScreen(onLogout = onLogout) // 파라미터 제거
             }
         }
     }
