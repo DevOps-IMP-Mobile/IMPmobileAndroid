@@ -20,6 +20,7 @@ class ProjectRepositoryImpl @Inject constructor(
             val response = projectApi.getProjectList(
                 userId = ctx.userId,
                 spUid = ctx.spUid,
+                delYn = "N" // 삭제되지 않은 프로젝트만 조회
                 // 필요시 groupCode 등 추가
             )
             Log.d("ProjectAPI", "API 성공 - 프로젝트 개수: ${response.list.size}")
