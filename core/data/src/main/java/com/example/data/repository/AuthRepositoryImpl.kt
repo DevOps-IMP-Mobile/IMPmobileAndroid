@@ -52,16 +52,27 @@ class AuthRepositoryImpl @Inject constructor(
 
             // 로그인 성공 후 /me API 호출 및 UserContext 저장
             try {
+                Log.d("AuthRepository", "=== /me API 호출 시작 ===")
                 val me = meApiService.getMe()
+                Log.d("AuthRepository", "/me API 성공 - 응답: $me")
+                
                 UserContext.instance.userId = me.userId
                 UserContext.instance.groupCode = me.groupCode
                 UserContext.instance.spUid = me.spUid
                 UserContext.instance.lastProjectNo = me.lastProjectNo
                 UserContext.instance.userName = me.userName
                 UserContext.instance.userUid = me.userUid
-                Log.d("AuthRepository", "/me 정보 저장: $me")
+                
+                Log.d("AuthRepository", "UserContext 저장 완료:")
+                Log.d("AuthRepository", "- userId: ${UserContext.instance.userId}")
+                Log.d("AuthRepository", "- groupCode: ${UserContext.instance.groupCode}")
+                Log.d("AuthRepository", "- spUid: ${UserContext.instance.spUid}")
+                Log.d("AuthRepository", "- lastProjectNo: ${UserContext.instance.lastProjectNo}")
+                Log.d("AuthRepository", "- userName: ${UserContext.instance.userName}")
+                Log.d("AuthRepository", "- userUid: ${UserContext.instance.userUid}")
             } catch (e: Exception) {
                 Log.e("AuthRepository", "/me API 실패: ${e.message}")
+                Log.e("AuthRepository", "에러 상세: ", e)
             }
 
             Log.d("AuthRepository", "로그인 성공 - token: $token")
