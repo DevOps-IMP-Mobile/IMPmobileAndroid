@@ -124,9 +124,18 @@ private fun IssueListScreen(
                 value = state.searchQuery,
                 onValueChange = { onIntent(IssueIntent.UpdateSearchQuery(it)) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search ID/Name/Number") },
+                placeholder = { Text("이슈 ID, 이름, 번호로 검색") },
                 leadingIcon = {
                     Icon(Icons.Default.Search, contentDescription = "검색")
+                },
+                trailingIcon = {
+                    if (state.searchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = { onIntent(IssueIntent.UpdateSearchQuery("")) }
+                        ) {
+                            Icon(Icons.Default.Clear, contentDescription = "검색어 지우기")
+                        }
+                    }
                 },
                 singleLine = true
             )
@@ -135,6 +144,7 @@ private fun IssueListScreen(
             FilterAndSortRow(
                 currentSortType = state.sortType,
                 issueCount = state.issues.size,
+                searchQuery = state.searchQuery,
                 onSortTypeChanged = { onIntent(IssueIntent.ChangeSortType(it)) },
                 onStatusFilter = { onIntent(IssueIntent.FilterByStatus(it)) }
             )
@@ -147,11 +157,82 @@ private fun IssueListScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(state.issues) { issue ->
-                IssueItem(
-                    issue = issue,
-                    onClick = { onIntent(IssueIntent.SelectIssue(issue)) }
-                )
+            if (state.isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else if (state.issues.isEmpty() && state.searchQuery.isNotEmpty()) {
+                // 검색 결과가 없을 때
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "🔍",
+                                fontSize = 48.sp
+                            )
+                            Text(
+                                text = "검색 결과가 없습니다",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray
+                            )
+                            Text(
+                                text = "'${state.searchQuery}'에 대한 검색 결과가 없습니다",
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
+            } else if (state.issues.isEmpty()) {
+                // 이슈가 없을 때
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "📋",
+                                fontSize = 48.sp
+                            )
+                            Text(
+                                text = "등록된 이슈가 없습니다",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
+            } else {
+                // 이슈 목록 표시
+                items(state.issues) { issue ->
+                    IssueItem(
+                        issue = issue,
+                        onClick = { onIntent(IssueIntent.SelectIssue(issue)) }
+                    )
+                }
             }
             
             // 하단 여백
@@ -209,6 +290,7 @@ private fun ProjectSelector(
 private fun FilterAndSortRow(
     currentSortType: IssueSortType,
     issueCount: Int,
+    searchQuery: String,
     onSortTypeChanged: (IssueSortType) -> Unit,
     onStatusFilter: (IssueStatus?) -> Unit
 ) {
@@ -217,10 +299,16 @@ private fun FilterAndSortRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // All 필터 버튼
+        // All 필터 버튼 (검색 결과 개수 표시)
+        val displayText = if (searchQuery.isNotEmpty()) {
+            "검색 결과 ($issueCount)"
+        } else {
+            "전체 ($issueCount)"
+        }
+        
         FilterChip(
             onClick = { onStatusFilter(null) },
-            label = { Text("All($issueCount)") },
+            label = { Text(displayText) },
             selected = false
         )
         

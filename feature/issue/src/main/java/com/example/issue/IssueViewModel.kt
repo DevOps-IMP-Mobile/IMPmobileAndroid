@@ -25,9 +25,23 @@ class IssueViewModel @Inject constructor(
     private val _effect = Channel<IssueEffect>(Channel.UNLIMITED)
     val effect = _effect.receiveAsFlow()
     
+    // 검색 디바운싱을 위한 Flow
+    private val _searchQuery = MutableStateFlow("")
+    
     init {
         handleIntent(IssueIntent.LoadProjects)
         handleIntent(IssueIntent.LoadIssues)
+        
+        // 검색 쿼리 디바운싱 처리
+        viewModelScope.launch {
+            _searchQuery
+                .debounce(500) // 500ms 디바운싱
+                .distinctUntilChanged()
+                .collect { query ->
+                    // API 호출만 수행 (filter는 이미 업데이트됨)
+                    loadIssues()
+                }
+        }
     }
     
     fun handleIntent(intent: IssueIntent) {
@@ -112,13 +126,15 @@ class IssueViewModel @Inject constructor(
     }
     
     private fun updateSearchQuery(query: String) {
+        // UI state와 filter 모두 즉시 업데이트
         _state.update { 
             it.copy(
                 searchQuery = query,
                 filter = it.filter.copy(searchQuery = query)
-            ) 
+            )
         }
-        loadIssues()
+        // API 호출용 디바운싱
+        _searchQuery.value = query
     }
     
     private fun filterByStatus(status: IssueStatus?) {
