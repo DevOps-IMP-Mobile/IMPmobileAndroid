@@ -37,6 +37,6 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun logout() {
-        //tokenManager.clearToken() 토큰 삭제?
+
     }
 }

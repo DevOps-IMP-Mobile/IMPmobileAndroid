@@ -24,7 +24,6 @@ data class UserProfile(
                 userId = response.userId,
                 userName = response.userName,
                 groupCode = response.groupCode,
-                spUid = response.spUid,
                 userUid = response.userUid,
                 lastProjectNo = response.lastProjectNo,
                 lastResponseDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())

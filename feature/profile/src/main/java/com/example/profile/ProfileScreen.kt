@@ -1,5 +1,6 @@
     package com.example.profile
 
+    import android.R.attr.fontWeight
     import androidx.compose.foundation.background
     import androidx.compose.foundation.layout.*
     import androidx.compose.foundation.rememberScrollState
@@ -143,10 +144,9 @@
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        ProfileTextField("사용자 ID", userInfo.userId)
-        ProfileTextField("UID", userInfo.userUid)
+        ProfileTextField("서비스 ID", userInfo.userId)
+        ProfileTextField("사용자 ID", userInfo.userUid)
         ProfileTextField("그룹", userInfo.groupCode)
-        ProfileTextField("SP UID", userInfo.spUid)
         ProfileTextField("마지막 프로젝트", userInfo.lastProjectNo)
         ProfileTextField("마지막 접속", userInfo.lastResponseDate)
 
@@ -155,7 +155,7 @@
         Button(
             onClick = onLogoutClick,
             modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red, contentColor = Color.White)
+            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray, contentColor = Color.Black)
         ) {
             Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "로그아웃")
             Spacer(modifier = Modifier.width(8.dp))
