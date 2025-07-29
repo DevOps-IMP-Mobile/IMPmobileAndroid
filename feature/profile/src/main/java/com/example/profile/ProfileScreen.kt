@@ -1,6 +1,7 @@
     package com.example.profile
 
     import android.R.attr.fontWeight
+    import androidx.compose.foundation.Image
     import androidx.compose.foundation.background
     import androidx.compose.foundation.layout.*
     import androidx.compose.foundation.rememberScrollState
@@ -15,10 +16,14 @@
     import androidx.compose.ui.Modifier
     import androidx.compose.ui.draw.clip
     import androidx.compose.ui.graphics.Color
+    import androidx.compose.ui.layout.ContentScale
+    import androidx.compose.ui.res.painterResource
     import androidx.compose.ui.text.font.FontWeight
+    import androidx.compose.ui.tooling.preview.Preview
     import androidx.compose.ui.unit.dp
     import androidx.compose.ui.unit.sp
     import androidx.hilt.navigation.compose.hiltViewModel
+
 
     @Composable
     fun ProfileScreen(
@@ -102,6 +107,7 @@
         }
     }
 
+
     @Composable
     fun ProfileContent(userInfo: UserProfile, onLogoutClick: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
@@ -112,19 +118,18 @@
                 .height(128.dp),
             contentAlignment = Alignment.TopCenter
         ) {
-            Box(
-                modifier = Modifier
-                    .size(115.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = userInfo.userName?.firstOrNull()?.toString()?.uppercase() ?: "?",
-                    color = Color.White,
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Bold
+            if (userInfo.systemRole == "SVCMGR") {
+                Image(
+                    painter = painterResource(id = R.drawable.admin),
+                    contentDescription = "시스템 관리자 이미지",
+                    modifier = Modifier
+                        .size(115.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                // 빈칸을 유지
+                Spacer(modifier = Modifier.size(115.dp))
             }
         }
 
@@ -133,27 +138,13 @@
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold
         )
-
-        Text(
-            text = when (userInfo.groupCode) {
-                "SYSMGR" -> "시스템 관리자"
-                "ADMIN" -> "관리자"
-                "USER" -> "사용자"
-                "DEV" -> "개발자"
-                else -> userInfo.groupCode ?: "사용자"
-            },
-            fontSize = 16.sp,
-            color = Color.Gray
-        )
-
         Spacer(modifier = Modifier.height(24.dp))
 
         ProfileTextField("서비스 ID", userInfo.userId)
-        ProfileTextField("사용자 ID", userInfo.userUid)
-        ProfileTextField("그룹", userInfo.groupCode)
+        ProfileTextField("이메일", userInfo.email)
+        ProfileTextField("전화번호", userInfo.telNo)
         ProfileTextField("마지막 프로젝트", userInfo.lastProjectNo)
         ProfileTextField("마지막 접속", userInfo.lastResponseDate)
-
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
@@ -172,7 +163,7 @@
     @Composable
     fun ProfileTextField(label: String, value: String?) {
         OutlinedTextField(
-            value = value ?: "정보 없음",
+            value = value ?: "설정되지 않음",
             onValueChange = {},
             label = { Text(label) },
             enabled = false,

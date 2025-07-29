@@ -21,10 +21,11 @@ data class UserProfile(
     companion object {
         fun fromMeResponse(response: MeResponse): UserProfile {
             return UserProfile(
-                userId = response.userId,
                 userName = response.userName,
-                groupCode = response.groupCode,
-                userUid = response.userUid,
+                userId = response.userId,
+                email = response.email,
+                telNo = response.telNo,
+                systemRole = response.systemRole,
                 lastProjectNo = response.lastProjectNo,
                 lastResponseDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             )
