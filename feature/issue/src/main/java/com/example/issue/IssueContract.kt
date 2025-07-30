@@ -7,6 +7,7 @@ import com.example.domain.model.issue.Issue
 import com.example.domain.model.issue.IssueFilter
 import com.example.domain.model.issue.IssueSortType
 import com.example.domain.model.issue.IssueStatus
+import com.example.domain.model.issue.IssueOptions
 
 /**
  * Issue 화면의 Intent (사용자 액션)
@@ -21,8 +22,32 @@ sealed class IssueIntent : UiIntent {
     data class ChangeSortType(val sortType: IssueSortType) : IssueIntent()
     data class SelectIssue(val issue: Issue) : IssueIntent()
     object BackToIssueList : IssueIntent()
-    data class ApproveIssue(val issueId: String) : IssueIntent()
-    data class RejectIssue(val issueId: String) : IssueIntent()
+    
+    // CRUD 관련
+    object NavigateToCreate : IssueIntent()
+    object NavigateToEdit : IssueIntent()
+    object BackFromCreate : IssueIntent()
+    object BackFromEdit : IssueIntent()
+    data class CreateIssue(
+        val title: String,
+        val description: String,
+        val typeId: String,
+        val priorityCd: String,
+        val importanceCd: String,
+        val startDate: String,
+        val endDate: String
+    ) : IssueIntent()
+    data class UpdateIssue(
+        val title: String,
+        val description: String,
+        val typeId: String,
+        val priorityCd: String,
+        val importanceCd: String,
+        val startDate: String,
+        val endDate: String
+    ) : IssueIntent()
+    object DeleteIssue : IssueIntent()
+    object LoadIssueOptions : IssueIntent()
 }
 
 /**
@@ -38,8 +63,31 @@ data class IssueState(
     val sortType: IssueSortType = IssueSortType.PRIORITY,
     val searchQuery: String = "",
     val currentScreen: IssueScreenType = IssueScreenType.ISSUE_LIST,
-    val error: String? = null
+    val error: String? = null,
+    
+    // CRUD 관련
+    val issueOptions: IssueOptions? = null,
+    val isCreating: Boolean = false,
+    val isEditing: Boolean = false,
+    val isDeleting: Boolean = false,
+    
+    // 폼 데이터
+    val createForm: IssueFormData = IssueFormData(),
+    val editForm: IssueFormData = IssueFormData()
 ) : UiState
+
+/**
+ * 이슈 폼 데이터
+ */
+data class IssueFormData(
+    val title: String = "",
+    val description: String = "",
+    val typeId: String = "",
+    val priorityCd: String = "",
+    val importanceCd: String = "",
+    val startDate: String = "",
+    val endDate: String = ""
+)
 
 /**
  * Issue 화면의 Effect (일회성 이벤트)
@@ -47,8 +95,9 @@ data class IssueState(
 sealed class IssueEffect : UiEffect {
     data class ShowError(val message: String) : IssueEffect()
     object ShowRefreshComplete : IssueEffect()
-    data class ShowApprovalSuccess(val issueTitle: String) : IssueEffect()
-    data class ShowRejectionSuccess(val issueTitle: String) : IssueEffect()
+    object ShowCreateSuccess : IssueEffect()
+    object ShowUpdateSuccess : IssueEffect()
+    object ShowDeleteSuccess : IssueEffect()
 }
 
 /**
@@ -56,5 +105,7 @@ sealed class IssueEffect : UiEffect {
  */
 enum class IssueScreenType {
     ISSUE_LIST,    // 이슈 목록
-    ISSUE_DETAIL   // 이슈 상세
+    ISSUE_DETAIL,  // 이슈 상세
+    ISSUE_CREATE,  // 이슈 등록
+    ISSUE_EDIT     // 이슈 수정
 }

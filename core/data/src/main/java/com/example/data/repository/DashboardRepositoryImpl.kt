@@ -45,7 +45,9 @@ class DashboardRepositoryImpl @Inject constructor(
         )
 
         // 상태별 차트 데이터
-        val statusGrouped = response.list.groupBy { it.issueStateName }
+        val statusGrouped = response.list
+            .filter { !it.issueStateName.isNullOrBlank() }
+            .groupBy { it.issueStateName }
         val statusChart = statusGrouped.map { entry ->
             val status = entry.key
             val issues = entry.value
@@ -57,7 +59,9 @@ class DashboardRepositoryImpl @Inject constructor(
         }
 
         // 타입별 차트 데이터
-        val typeGrouped = response.list.groupBy { it.issueTypeName }
+        val typeGrouped = response.list
+            .filter { !it.issueTypeName.isNullOrBlank() }
+            .groupBy { it.issueTypeName }
         val typeChart = mutableListOf<TypeChartData>()
         var index = 0
         for (entry in typeGrouped) {

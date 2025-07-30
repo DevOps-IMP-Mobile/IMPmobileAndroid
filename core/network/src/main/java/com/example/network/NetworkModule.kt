@@ -7,6 +7,7 @@ import com.example.network.api.DashboardApiService
 import com.example.network.api.ProjectApiService
 import com.example.network.api.IssueApiService
 import com.example.network.api.MeApiService
+import com.example.network.api.CodeApiService
 import com.example.network.interceptor.AuthInterceptor
 import dagger.Module
 import dagger.Provides
@@ -26,6 +27,7 @@ object NetworkModule {
 
     private const val BASE_URL = "http://211.55.77.168:8401/portal/"
     private const val DASHBOARD_BASE_URL = "http://211.55.77.168:8402/"
+    private const val CODE_BASE_URL = "http://211.55.77.168:8401/portal/"
 
     @Provides
     @Singleton
@@ -87,6 +89,12 @@ object NetworkModule {
     @Singleton
     fun provideMeApiService(retrofit: Retrofit): MeApiService {
         return retrofit.create(MeApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCodeApiService(retrofit: Retrofit): CodeApiService {
+        return retrofit.create(CodeApiService::class.java)
     }
 
     // Dashboard 전용 Retrofit (8402 포트)

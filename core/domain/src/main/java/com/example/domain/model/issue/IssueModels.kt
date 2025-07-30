@@ -12,7 +12,7 @@ data class Issue(
     val priority: IssuePriority,
     val importance: IssueImportance,
     val assigneeId: String,
-    val assigneeName: String,
+    val assigneeName: String? = null,
     val reporterId: String,
     val reporterName: String,
     val createdDate: String,
@@ -58,7 +58,8 @@ enum class IssuePriority(val displayName: String, val colorHex: String) {
 enum class IssueImportance(val displayName: String, val colorHex: String) {
     CRITICAL("심각", "#F44336"),
     HIGH("높음", "#FF9800"),
-    NORMAL("보통", "#4CAF50")
+    NORMAL("보통", "#4CAF50"),
+    LOW("낮음", "#9E9E9E")
 }
 
 /**
