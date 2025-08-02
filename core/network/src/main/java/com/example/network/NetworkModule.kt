@@ -25,9 +25,9 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://211.55.77.168:8401/portal/"
-    private const val DASHBOARD_BASE_URL = "http://211.55.77.168:8402/"
-    private const val CODE_BASE_URL = "http://211.55.77.168:8401/portal/"
+    private const val BASE_URL = "http://coverdreamit.iptime.org:8401/portal/"
+    private const val DASHBOARD_BASE_URL = "http://coverdreamit.iptime.org:8402/"
+    private const val CODE_BASE_URL = "http://coverdreamit.iptime.org:8401/portal/"
 
     @Provides
     @Singleton

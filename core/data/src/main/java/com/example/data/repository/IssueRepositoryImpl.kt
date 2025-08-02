@@ -90,7 +90,7 @@ class IssueRepositoryImpl @Inject constructor(
         return try {
             val ctx = UserContext.instance
             Log.d("IssueAPI", "=== 이슈 등록 API 호출 시작 ===")
-            Log.d("IssueAPI", "API URL: POST http://211.55.77.168:8402/its/devops/issuemgr/createIssue")
+            Log.d("IssueAPI", "API URL: POST http://coverdreamit.iptime.org:8402/its/devops/issuemgr/createIssue")
             
             // 날짜 변환 (YYYYMMDD 또는 YYYY-MM-DD 입력 모두 YYYY-MM-DD로 변환)
             fun toDashDate(input: String): String = when {
