@@ -28,11 +28,21 @@ data class TypeChartData(
 )
 
 /**
+ * 프로젝트 정보
+ */
+data class Project(
+    val projectNo: String,
+    val projectName: String
+)
+
+/**
  * 대시보드 전체 데이터
  */
 data class DashboardData(
     val todayTasks: TodayTaskStats = TodayTaskStats(),
     val statusChart: List<StatusChartData> = emptyList(),
     val typeChart: List<TypeChartData> = emptyList(),
-    val currentDate: String = ""
+    val currentDate: String = "",
+    val projects: List<Project> = emptyList(),
+    val selectedProject: Project? = null
 )

@@ -14,6 +14,7 @@ sealed class HomeIntent : UiIntent {
     object NavigateToTaskDetail : HomeIntent()
     object NavigateToStatusDetail : HomeIntent()
     object NavigateToTypeDetail : HomeIntent()
+    data class SelectProject(val project: com.example.domain.model.home.Project) : HomeIntent()
 }
 
 /**

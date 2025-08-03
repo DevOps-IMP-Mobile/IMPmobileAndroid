@@ -16,7 +16,8 @@ import javax.inject.Inject
 class GetDashboardDataUseCase @Inject constructor(
     private val dashboardRepository: DashboardRepository
 ) {
-    suspend operator fun invoke(): Flow<DashboardData> {
-        return dashboardRepository.getDashboardData()
+    suspend operator fun invoke(selectedProject: com.example.domain.model.home.Project?): Flow<DashboardData> {
+        android.util.Log.d("GetDashboardDataUseCase", "UseCase 호출 - 선택된 프로젝트: ${selectedProject?.projectName}")
+        return dashboardRepository.getDashboardData(selectedProject)
     }
 }

@@ -1,5 +1,6 @@
 package com.example.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.domain.usecase.home.GetDashboardDataUseCase
@@ -28,6 +29,7 @@ class HomeViewModel @Inject constructor(
         when (intent) {
             is HomeIntent.LoadDashboard -> loadDashboard()
             is HomeIntent.RefreshDashboard -> refreshDashboard()
+            is HomeIntent.SelectProject -> selectProject(intent.project)
             is HomeIntent.NavigateToTaskDetail -> {
                 sendEffect(HomeEffect.NavigateToTaskList)
             }
@@ -40,12 +42,31 @@ class HomeViewModel @Inject constructor(
         }
     }
     
-    private fun loadDashboard() {
+    private fun selectProject(project: com.example.domain.model.home.Project) {
         viewModelScope.launch {
+            Log.d("HomeViewModel", "프로젝트 선택: ${project.projectName} (${project.projectNo})")
+            _state.update { 
+                it.copy(
+                    dashboardData = it.dashboardData.copy(selectedProject = project)
+                ) 
+            }
+            // 프로젝트 변경 시 대시보드 데이터 새로 로드 (선택된 프로젝트 유지)
+            loadDashboardWithSelectedProject(project)
+        }
+    }
+    
+    private fun loadDashboard() {
+        loadDashboardWithSelectedProject(_state.value.dashboardData.selectedProject ?: null)
+    }
+    
+    private fun loadDashboardWithSelectedProject(selectedProject: com.example.domain.model.home.Project?) {
+        viewModelScope.launch {
+            Log.d("HomeViewModel", "대시보드 로드 - 선택된 프로젝트: ${selectedProject?.projectName} (${selectedProject?.projectNo})")
             _state.update { it.copy(isLoading = true, error = null) }
             
-            getDashboardDataUseCase()
+            getDashboardDataUseCase(selectedProject)
                 .catch { throwable ->
+                    Log.e("HomeViewModel", "UseCase 에러: ${throwable.message}")
                     _state.update { 
                         it.copy(
                             isLoading = false, 
@@ -55,13 +76,17 @@ class HomeViewModel @Inject constructor(
                     sendEffect(HomeEffect.ShowError(throwable.message ?: "오류가 발생했습니다."))
                 }
                 .collect { dashboardData ->
+                    Log.d("HomeViewModel", "데이터 수신 - 프로젝트: ${dashboardData.selectedProject?.projectName}")
+                    Log.d("HomeViewModel", "데이터 수신 - 프로젝트 개수: ${dashboardData.projects.size}")
+                    Log.d("HomeViewModel", "데이터 수신 - 오늘의 할일: 진행=${dashboardData.todayTasks.inProgress}, 지연=${dashboardData.todayTasks.delayed}, 등록=${dashboardData.todayTasks.registered}")
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            dashboardData = dashboardData,
+                            dashboardData = dashboardData.copy(selectedProject = selectedProject),
                             error = null
                         )
                     }
+                    Log.d("HomeViewModel", "상태 업데이트 완료")
                 }
         }
     }

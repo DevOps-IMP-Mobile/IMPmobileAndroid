@@ -13,10 +13,11 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
         
-        // URL 로그 출력
-        Log.d("AuthInterceptor", "=== API 호출 URL ===")
-        Log.d("AuthInterceptor", "URL: ${originalRequest.url}")
+        Log.d("AuthInterceptor", "=== API 호출 상세 정보 ===")
+        Log.d("AuthInterceptor", "Full URL: ${originalRequest.url}")
         Log.d("AuthInterceptor", "Method: ${originalRequest.method}")
+        Log.d("AuthInterceptor", "Path: ${originalRequest.url.encodedPath}")
+        Log.d("AuthInterceptor", "Query Parameters: ${originalRequest.url.query ?: "없음"}")
         Log.d("AuthInterceptor", "Original Headers: ${originalRequest.headers}")
         
         val token = runBlocking { tokenManager.getToken() }
@@ -36,6 +37,14 @@ class AuthInterceptor @Inject constructor(
             Log.d("AuthInterceptor", "Final Headers: ${requestWithHeaders.headers}")
             requestWithHeaders
         }
-        return chain.proceed(newRequest)
+        val response = chain.proceed(newRequest)
+        
+        // 응답 로그 추가
+        Log.d("AuthInterceptor", "=== API 응답 ===\nStatus: ${response.code}\nMessage: ${response.message}\nHeaders: ${response.headers}")
+        if (!response.isSuccessful) {
+            Log.w("AuthInterceptor", "⚠️ API 실패 - Status: ${response.code}, Message: ${response.message}")
+        }
+        
+        return response
     }
 }

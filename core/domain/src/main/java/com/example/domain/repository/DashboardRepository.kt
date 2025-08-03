@@ -5,5 +5,5 @@ import com.example.domain.model.home.DashboardData
 import kotlinx.coroutines.flow.Flow
 
 interface DashboardRepository {
-    suspend fun getDashboardData(): Flow<DashboardData>
+    suspend fun getDashboardData(selectedProject: com.example.domain.model.home.Project?): Flow<DashboardData>
 }

@@ -2,6 +2,7 @@
 package com.example.network.api
 
 import com.example.network.dto.DashboardResponse
+import com.example.network.dto.ProjectListResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -16,4 +17,11 @@ interface DashboardApiService {
         @Query("srch_delay") srchDelay: String = "",
         @Query("srch_not_end") srchNotEnd: String = ""
     ): DashboardResponse
+    
+    @GET("its/devops/prjmgr/getMyProjectList")
+    suspend fun getMyProjectList(
+        @Query("sp_uid") spUid: String = "",
+        @Query("loginId") loginId: String = "",
+        @Query("groupCode") groupCode: String = ""
+    ): ProjectListResponse
 }

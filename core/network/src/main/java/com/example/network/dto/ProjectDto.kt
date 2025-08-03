@@ -9,16 +9,21 @@ data class ProjectListResponse(
 )
 
 data class ProjectDto(
+    @SerializedName("psc") val psc: String? = null,
+    @SerializedName("end_dt") val endDate: String,
+    @SerializedName("project_state_cd") val projectStateCd: String? = null,
+    @SerializedName("upd_dt") val updDt: String? = null,
     @SerializedName("project_uid") val projectUid: String,
+    @SerializedName("standard_yn") val standardYn: String? = null,
+    @SerializedName("crtr_dt") val crtrDt: String? = null,
     @SerializedName("project_name") val projectName: String,
+    @SerializedName("del_yn") val delYn: String? = null,
+    @SerializedName("start_dt") val startDate: String,
     @SerializedName("project_no") val projectNo: String,
-    @SerializedName("start_dt") val startDate: String?,
-    @SerializedName("end_dt") val endDate: String?,
-    @SerializedName("project_manager") val managerId: String?,
-    @SerializedName("project_manager_name") val managerName: String?,
-    @SerializedName("del_yn") val delYn: String?,
-    @SerializedName("standard_yn") val standardYn: String?,
-    @SerializedName("project_state_cd") val projectStateCd: String?,
-    @SerializedName("sp_uid") val spUid: String?
-    // 필요한 필드는 추가로 작성
+    @SerializedName("sp_name") val spName: String? = null,
+    @SerializedName("project_manager_name") val managerName: String? = null,
+    @SerializedName("sp_uid") val spUid: String? = null,
+    @SerializedName("project_manager") val managerId: String? = null,
+    @SerializedName("rn") val rn: Int? = null,
+    @SerializedName("new_order") val newOrder: String? = null
 ) 
