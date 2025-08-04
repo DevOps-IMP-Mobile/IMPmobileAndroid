@@ -147,7 +147,8 @@ class DashboardRepositoryImpl @Inject constructor(
         projects: List<com.example.domain.model.home.Project>,
         selectedProject: com.example.domain.model.home.Project?
     ): DashboardData {
-        val currentDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val currentDateForApp = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val currentDateForApi = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Date())
         
         Log.d("DashboardAPI", "프로젝트 목록: ${projects.map { "${it.projectName}(${it.projectNo})" }}")
 
@@ -156,10 +157,35 @@ class DashboardRepositoryImpl @Inject constructor(
         Log.d("DashboardAPI", "이슈 데이터 사용: ${filteredList.size}개")
 
         // 오늘의 할일 계산 (API 문서 기준)
+        Log.d("DashboardAPI", "날짜 비교 디버깅:")
+        Log.d("DashboardAPI", "현재 날짜 (API 형식): $currentDateForApi")
+        Log.d("DashboardAPI", "이슈 등록일 샘플:")
+        filteredList.take(5).forEach { issue ->
+            Log.d("DashboardAPI", "  - ${issue.issueName}: crtrDtYYYYMMDD='${issue.crtrDtYYYYMMDD}'")
+        }
+        
+        val registeredToday = filteredList.filter { issue ->
+            // API의 crtrDtYYYYMMDD는 "yyyy-MM-dd HH:mm:ss" 형식이므로 날짜 부분만 추출하여 비교
+            val issueDate = issue.crtrDtYYYYMMDD.substring(0, 10) // "2025-08-04" 부분만 추출
+            val issueDateForApi = try {
+                val inputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val outputFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+                val date = inputFormat.parse(issueDate)
+                outputFormat.format(date ?: Date())
+            } catch (e: Exception) {
+                issueDate.replace("-", "")
+            }
+            issueDateForApi == currentDateForApi
+        }
+        Log.d("DashboardAPI", "오늘 등록된 이슈 ${registeredToday.size}개:")
+        registeredToday.forEach { issue ->
+            Log.d("DashboardAPI", "  - ${issue.issueName} (${issue.crtrDtYYYYMMDD})")
+        }
+        
         val todayTasks = TodayTaskStats(
             inProgress = filteredList.count { !isCompleteStatus(it.issueStateName) }, // 잔여 = 완료상태가 아닌 것들
             delayed = filteredList.count { it.isn == "지연" },                      // 지연 = isn == "지연"
-            registered = filteredList.count { it.crtrDtYYYYMMDD == currentDate }    // 등록 = 오늘 등록된 것들
+            registered = registeredToday.size    // 등록 = 오늘 등록된 것들
         )
 
         Log.d("DashboardAPI", "오늘의 할일 계산 완료 - 잔여:${todayTasks.inProgress}, 지연:${todayTasks.delayed}, 등록:${todayTasks.registered}")
@@ -203,7 +229,7 @@ class DashboardRepositoryImpl @Inject constructor(
             todayTasks = todayTasks,
             statusChart = statusChart,
             typeChart = typeChart,
-            currentDate = currentDate,
+            currentDate = currentDateForApp,
             projects = projects,
             selectedProject = selectedProject
         )
