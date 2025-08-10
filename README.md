@@ -3,23 +3,34 @@
 > Clean Architecture + MVI Pattern 기반 프로젝트 관리 Android 앱 <br>
 25.01.17 - 25.05.30
 
-<img width="1920" height="1080" alt="Project Management Cover" src="https://github.com/user-attachments/assets/925576e1-9379-4e04-b277-293910569ab0" />
+[![Project Management Cover](https://github.com/user-attachments/assets/925576e1-9379-4e04-b277-293910569ab0)](https://eggplant-piccolo-90a.notion.site/21a5c454f14581aa8ee4c42f6c358d6c?pvs=74)
+---
 
+## 🎥 시연 영상
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=nuIPEyN1rqU">
+    <img src="https://img.youtube.com/vi/nuIPEyN1rqU/0.jpg" alt="시연 영상" width="600"/>
+  </a>
+</p>
+
+---
 ## 📱 Contributors
 | 성규현 (Android Lead) <br> [@dmp100](https://github.com/dmp100) | [@lime13579](https://github.com/lime13579) |
 |:---:|:---:|
-| <img width="150" src="https://avatars.githubusercontent.com/u/107687577?v=4"/> | <img width="150" src="https://avatars.githubusercontent.com/u/lime13579?v=4"/> |
+| <img width="150" src="https://avatars.githubusercontent.com/u/107687577?v=4"/> | <img width="150" src="https://github.com/user-attachments/assets/1afd184d-2e42-42d5-9698-8aaaefb64a4e"/> |
 | 프로젝트 관리 Android 앱 개발<br>UI/UX 설계, Clean Architecture 구현<br>프로젝트 관리, 태스크 트래킹, 대시보드 시스템 | 프로필 화면 제작 및 API 연결<br>사용자 프로필 UI/UX 구현<br>프로필 API 연동 및 데이터 관리 |
+
 
 <br/>
 
+
 ## 🟨 SCREENSHOT
-| 로그인 | 홈 대시보드 | 프로젝트 목록 |
+
+| 로그인 | 홈 대시보드 | 프로젝트 |
 |:---:|:---:|:---:|
-| <img width="200" src="https://via.placeholder.com/200x400/E3F2FD/1976D2?text=Login"/> | <img width="200" src="https://via.placeholder.com/200x400/E8F5E8/388E3C?text=Dashboard"/> | <img width="200" src="https://via.placeholder.com/200x400/FFF3E0/F57C00?text=Projects"/> |
-| 프로젝트 상세 | 이슈 관리 | 프로필 |
-|:---:|:---:|:---:|
-| <img width="200" src="https://via.placeholder.com/200x400/F3E5F5/7B1FA2?text=Project+Detail"/> | <img width="200" src="https://via.placeholder.com/200x400/FFEBEE/C62828?text=Issue+List"/> | <img width="200" src="https://via.placeholder.com/200x400/E0F2F1/00695C?text=Profile"/> |
+| <img width="200" src="https://github.com/user-attachments/assets/c1e62bdc-0b64-412b-9cda-74d452763ab1"/> | <img width="200" src="https://github.com/user-attachments/assets/68dd8125-a781-4ec1-a682-d4aeddd4bad1"/> | <img width="200" src="https://github.com/user-attachments/assets/e6fb192b-d744-4cce-bec5-5e33943ee62d"/> |
+| 이슈 관리 | 이슈 생성,수정 | 프로필 |
+| <img width="200" src="https://github.com/user-attachments/assets/b4e6fa91-545a-4ce1-a366-43c586ae5ee0"/> | <img width="200" src="https://github.com/user-attachments/assets/53e4ed63-758e-44d4-9285-9c1537182f5a"/> | <img width="200" src="https://github.com/user-attachments/assets/d68658af-9a65-410f-be89-f70126cf27f4"/> |
 
 <br/>
 
@@ -28,9 +39,12 @@ Project Management Android App은 기존 PORTAL/ITS/QMS 통합 웹 시스템에�
 
 ### 해결하고자 하는 문제
 - 🖥️ PC 의존적 업무: 기존 웹 시스템의 모바일 접근성 한계 해결
+
 - 📱 언제 어디서나: 외부에서도 실시간 프로젝트 현황 확인 및 관리
+
 - ⚡ 빠른 대응: 이슈 발생 시 즉시 확인하고 대응할 수 있는 모바일 환경 제공
 - 🎯 핵심 기능 집중: 웹 시스템의 복잡한 기능 중 모바일에서 꼭 필요한 기능만 선별
+
 
 ## 🌐 웹 시스템 연계 기능 (Web Integration Features)
 Project Management Android App은 기존의 **PORTAL/ITS/QMS 통합 웹 시스템**과 연동되며, 모바일 환경에서 다음과 같은 핵심 기능을 제공합니다. 이 기능들은 웹에서 제공하던 복잡한 기능 중 실제 모바일 사용자에게 **가장 필요한 기능들만 선별**하여, **간편하고 빠른 UI/UX**로 재구성되었습니다.
