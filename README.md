@@ -15,10 +15,10 @@
 
 ---
 ## 📱 Contributors
-| 성규현 (Android Lead) <br> [@dmp100](https://github.com/dmp100) | [@lime13579](https://github.com/lime13579) |
-|:---:|:---:|
-| <img width="150" src="https://avatars.githubusercontent.com/u/107687577?v=4"/> | <img width="150" src="https://github.com/user-attachments/assets/1afd184d-2e42-42d5-9698-8aaaefb64a4e"/> |
-| 프로젝트 관리 Android 앱 개발<br>UI/UX 설계, Clean Architecture 구현<br>프로젝트 관리, 태스크 트래킹, 대시보드 시스템 | 프로필 화면 제작 및 API 연결<br>사용자 프로필 UI/UX 구현<br>프로필 API 연동 및 데이터 관리 |
+| 성규현 (Android Lead) <br> [@dmp100](https://github.com/dmp100) | [@lime13579](https://github.com/lime13579) | [@mrangjw](https://github.com/mrangjw) |
+|:---:|:---:|:---:|
+| <img width="150" src="https://avatars.githubusercontent.com/u/107687577?v=4"/> | <img width="150" src="https://github.com/user-attachments/assets/1afd184d-2e42-42d5-9698-8aaaefb64a4e"/> | <img width="150" src="https://avatars.githubusercontent.com/u/mrangjw?v=4"/> |
+| 프로젝트 관리 Android 앱 개발<br>UI/UX 설계, Clean Architecture 구현<br>프로젝트 관리, 태스크 트래킹, 대시보드 시스템 | 프로필 화면 제작 및 API 연결<br>사용자 프로필 UI/UX 구현<br>프로필 API 연동 및 데이터 관리 | PM 및 API 연결<br>프로젝트 기획 및 관리<br>백엔드 API 설계 및 연동 |
 
 
 <br/>
