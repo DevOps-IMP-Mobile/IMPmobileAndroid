@@ -11,7 +11,7 @@ interface IssueRepository {
         filter: IssueFilter = IssueFilter(),
         sortType: IssueSortType = IssueSortType.PRIORITY
     ): Flow<List<Issue>>
-    
+
     // 이슈 등록
     suspend fun createIssue(
         title: String,
@@ -23,7 +23,7 @@ interface IssueRepository {
         endDate: String,
         projectNo: String
     ): Result<Boolean>
-    
+
     // 이슈 수정
     suspend fun updateIssue(
         issueId: String,
@@ -36,13 +36,13 @@ interface IssueRepository {
         endDate: String,
         projectNo: String
     ): Result<Boolean>
-    
+
     // 이슈 삭제
     suspend fun deleteIssue(
         issueId: String,
         projectNo: String
     ): Result<Boolean>
-    
+
     // 이슈 옵션 조회
     suspend fun getIssueOptions(projectNo: String): Result<IssueOptions>
-} 
+}

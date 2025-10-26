@@ -8,16 +8,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,7 +37,26 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val bottomSheetState = rememberModalBottomSheetState()
+
+    // Drawer 상태 동기화
+    LaunchedEffect(state.isDrawerOpen) {
+        if (state.isDrawerOpen) {
+            drawerState.open()
+        } else {
+            drawerState.close()
+        }
+    }
+
+    // Drawer가 닫힐 때 State 업데이트
+    LaunchedEffect(drawerState.isClosed) {
+        if (drawerState.isClosed && state.isDrawerOpen) {
+            viewModel.handleIntent(HomeIntent.CloseDrawer)
+        }
+    }
+
     // Effect 처리
     LaunchedEffect(viewModel.effect) {
         viewModel.effect.collect { effect ->
@@ -64,64 +79,589 @@ fun HomeScreen(
             }
         }
     }
-    
-    Column(
-        modifier = Modifier.fillMaxSize()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ProjectDrawerContent(
+                projects = state.dashboardData.projects,
+                selectedProject = state.dashboardData.selectedProject,
+                onProjectSelected = { project ->
+                    viewModel.handleIntent(HomeIntent.SelectProject(project))
+                },
+                onClose = {
+                    scope.launch { drawerState.close() }
+                }
+            )
+        },
+        gesturesEnabled = true
     ) {
-        // 헤더
+        Scaffold { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues)) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // 헤더
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // 햄버거 메뉴 버튼
+                                IconButton(
+                                    onClick = {
+                                        scope.launch {
+                                            drawerState.open()
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Menu,
+                                        contentDescription = "메뉴"
+                                    )
+                                }
+
+                                Text(
+                                    text = "홈",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                // 캘린더 아이콘 버튼 (최근 이슈 조회)
+                                IconButton(
+                                    onClick = {
+                                        viewModel.handleIntent(HomeIntent.OpenRecentIssuesSheet)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = "최근 이슈"
+                                    )
+                                }
+
+                                // 새로고침 버튼
+                                IconButton(
+                                    onClick = { viewModel.handleIntent(HomeIntent.RefreshDashboard) }
+                                ) {
+                                    if (state.isLoading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Refresh,
+                                            contentDescription = "새로고침"
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        // 선택된 프로젝트 표시
+                        if (state.dashboardData.selectedProject != null) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Build,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Column {
+                                        Text(
+                                            text = state.dashboardData.selectedProject!!.projectName,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        )
+                                        Text(
+                                            text = "프로젝트 번호: ${state.dashboardData.selectedProject!!.projectNo}",
+                                            fontSize = 12.sp,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Divider()
+
+                    HomeContent(
+                        state = state,
+                        onIntent = viewModel::handleIntent
+                    )
+                }
+
+                // 최근 이슈 BottomSheet
+                if (state.isRecentIssuesSheetOpen) {
+                    RecentIssuesBottomSheet(
+                        issues = state.recentIssues,
+                        isLoading = state.isLoadingRecentIssues,
+                        onDismiss = {
+                            viewModel.handleIntent(HomeIntent.CloseRecentIssuesSheet)
+                        },
+                        sheetState = bottomSheetState
+                    )
+                }
+            }
+        }
+    }
+}
+
+// 프로젝트 선택 Drawer
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ProjectDrawerContent(
+    projects: List<com.example.domain.model.home.Project>,
+    selectedProject: com.example.domain.model.home.Project?,
+    onProjectSelected: (com.example.domain.model.home.Project) -> Unit,
+    onClose: () -> Unit
+) {
+    ModalDrawerSheet {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(300.dp)
+        ) {
+            // Drawer 헤더
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "프로젝트 선택",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    IconButton(onClick = onClose) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "닫기",
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+
+            Divider()
+
+            // 프로젝트 목록
+            if (projects.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "프로젝트가 없습니다",
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(projects) { project ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onProjectSelected(project) },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (selectedProject?.projectNo == project.projectNo)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
+                                    MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = if (selectedProject?.projectNo == project.projectNo) 4.dp else 2.dp
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (selectedProject?.projectNo == project.projectNo)
+                                        Icons.Default.CheckCircle
+                                    else
+                                        Icons.Default.Build,
+                                    contentDescription = null,
+                                    tint = if (selectedProject?.projectNo == project.projectNo)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Column {
+                                    Text(
+                                        text = project.projectName,
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = if (selectedProject?.projectNo == project.projectNo)
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = "번호: ${project.projectNo}",
+                                        fontSize = 12.sp,
+                                        color = if (selectedProject?.projectNo == project.projectNo)
+                                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        else
+                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 최근 이슈 BottomSheet
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun RecentIssuesBottomSheet(
+    issues: List<com.example.domain.model.issue.Issue>,
+    isLoading: Boolean,
+    onDismiss: () -> Unit,
+    sheetState: SheetState
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .heightIn(max = 600.dp)
+                .padding(horizontal = 16.dp)
         ) {
+            // 헤더
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "최근 2주 이슈",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "총 ${issues.size}개",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "닫기"
+                    )
+                }
+            }
+
+            Divider(modifier = Modifier.padding(bottom = 16.dp))
+
+            // 내용
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (issues.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                        Text(
+                            text = "최근 2주간 등록된 이슈가 없습니다",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(issues) { issue ->
+                        IssueItemCard(issue = issue)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 이슈 아이템 카드
+// 이슈 아이템 카드
+@Composable
+fun IssueItemCard(issue: com.example.domain.model.issue.Issue) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 제목과 상태
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = issue.title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color(android.graphics.Color.parseColor(issue.status.colorHex))
+                ) {
+                    Text(
+                        text = issue.status.displayName,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
+            }
+
+            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // 날짜 정보 (강조)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "홈",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                IconButton(
-                    onClick = { viewModel.handleIntent(HomeIntent.RefreshDashboard) }
+                // 등록일
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    if (state.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "등록일",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Text(
+                            text = issue.createdDate.take(10),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "새로고침"
+                    }
+                }
+
+                // 화살표
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+
+                // 종료일 (마감일)
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = "종료일",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Text(
+                            text = issue.dueDate.take(10),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
                         )
                     }
                 }
             }
-            
-            // 프로젝트 선택 드롭다운
-            ProjectDropdown(
-                projects = state.dashboardData.projects,
-                selectedProject = state.dashboardData.selectedProject,
-                onProjectSelected = { project ->
-                    viewModel.handleIntent(HomeIntent.SelectProject(project))
+
+            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // 메타 정보 (한 줄로)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 좌측: 우선순위 + 타입
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 우선순위
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = Color(android.graphics.Color.parseColor(issue.priority.colorHex))
+                        )
+                        Text(
+                            text = issue.priority.displayName,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+
+                    // 타입
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = issue.type.displayName,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
                 }
-            )
+
+                // 우측: 담당자
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = issue.assigneeName ?: "미지정",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
         }
-        
-        Divider()
-        
-        HomeContent(
-            state = state,
-            onIntent = viewModel::handleIntent
-        )
     }
 }
-
 @Composable
 private fun ProjectSelector(
     projects: List<com.example.domain.model.home.Project>,
@@ -129,13 +669,13 @@ private fun ProjectSelector(
     onProjectSelected: (com.example.domain.model.home.Project) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { 
+            .clickable {
                 if (projects.isNotEmpty()) {
-                    expanded = true 
+                    expanded = true
                 }
             },
         shape = RoundedCornerShape(12.dp),
@@ -168,7 +708,7 @@ private fun ProjectSelector(
                     )
                 }
             }
-            
+
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = "프로젝트 선택",
@@ -176,16 +716,16 @@ private fun ProjectSelector(
             )
         }
     }
-    
+
     if (expanded) {
         AlertDialog(
             onDismissRequest = { expanded = false },
-            title = { 
+            title = {
                 Text(
                     text = "프로젝트 선택",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
-                ) 
+                )
             },
             text = {
                 LazyColumn(
@@ -202,9 +742,9 @@ private fun ProjectSelector(
                                 },
                             shape = RoundedCornerShape(8.dp),
                             colors = CardDefaults.cardColors(
-                                containerColor = if (selectedProject?.projectNo == project.projectNo) 
-                                    MaterialTheme.colorScheme.primaryContainer 
-                                else 
+                                containerColor = if (selectedProject?.projectNo == project.projectNo)
+                                    MaterialTheme.colorScheme.primaryContainer
+                                else
                                     MaterialTheme.colorScheme.surface
                             )
                         ) {
@@ -215,17 +755,17 @@ private fun ProjectSelector(
                                     text = project.projectName,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Medium,
-                                    color = if (selectedProject?.projectNo == project.projectNo) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer 
-                                    else 
+                                    color = if (selectedProject?.projectNo == project.projectNo)
+                                        MaterialTheme.colorScheme.onPrimaryContainer
+                                    else
                                         MaterialTheme.colorScheme.onSurface
                                 )
                                 Text(
                                     text = "프로젝트 번호: ${project.projectNo}",
                                     fontSize = 12.sp,
-                                    color = if (selectedProject?.projectNo == project.projectNo) 
-                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f) 
-                                    else 
+                                    color = if (selectedProject?.projectNo == project.projectNo)
+                                        MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    else
                                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
@@ -266,7 +806,7 @@ private fun HomeContent(
                 onTaskClick = { onIntent(HomeIntent.NavigateToTaskDetail) }
             )
         }
-        
+
         item {
             LargeStatusChartSection(
                 state = state,
@@ -294,7 +834,7 @@ private fun TodayTaskSection(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
-        
+
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -314,24 +854,24 @@ private fun TodayTaskSection(
                     fontSize = 12.sp,
                     color = Color.Gray
                 )
-                
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     TaskCountItem(
-                        count = inProgress.toString(), 
-                        label = "잔여", 
+                        count = inProgress.toString(),
+                        label = "잔여",
                         color = Color.Black
                     )
                     TaskCountItem(
-                        count = delayed.toString(), 
-                        label = "지연", 
+                        count = delayed.toString(),
+                        label = "지연",
                         color = Color.Red
                     )
                     TaskCountItem(
-                        count = registered.toString(), 
-                        label = "등록", 
+                        count = registered.toString(),
+                        label = "등록",
                         color = Color.Blue
                     )
                 }
@@ -343,7 +883,7 @@ private fun TodayTaskSection(
 @Composable
 private fun TaskCountItem(
     count: String,
-    label: String, 
+    label: String,
     color: Color
 ) {
     Column(
@@ -380,7 +920,7 @@ private fun LargeStatusChartSection(
 ) {
     val pagerState = rememberPagerState(pageCount = { 2 })
     val scope = rememberCoroutineScope()
-    
+
     Column(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -390,7 +930,7 @@ private fun LargeStatusChartSection(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
-        
+
         // 슬라이드 차트 컨테이너
         Card(
             modifier = Modifier
@@ -425,7 +965,7 @@ private fun LargeStatusChartSection(
                         tint = if (pagerState.currentPage > 0) Color(0xFF6366F1) else Color.Gray
                     )
                 }
-                
+
                 IconButton(
                     onClick = {
                         scope.launch {
@@ -445,7 +985,7 @@ private fun LargeStatusChartSection(
                         tint = if (pagerState.currentPage < 1) Color(0xFF6366F1) else Color.Gray
                     )
                 }
-                
+
                 // 슬라이드 차트
                 HorizontalPager(
                     state = pagerState,
@@ -460,16 +1000,16 @@ private fun LargeStatusChartSection(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Spacer(modifier = Modifier.height(20.dp))
-                                
+
                                 Text(
                                     text = "나의 상태 현황",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(10.dp))
-                                
+
                                 // 큰 도넛 차트 (위로 올림)
                                 Box(
                                     modifier = Modifier.offset(y = (-20).dp) // 위로 20dp 올림
@@ -478,9 +1018,9 @@ private fun LargeStatusChartSection(
                                         statusChartData = state.dashboardData.statusChart
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(10.dp))
-                                
+
                                 // 범례 (위로 올림)
                                 Box(
                                     modifier = Modifier.offset(y = (-15).dp) // 위로 15dp 올림
@@ -496,7 +1036,7 @@ private fun LargeStatusChartSection(
                                         }
                                     }
                                 }
-                                
+
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }
@@ -508,16 +1048,16 @@ private fun LargeStatusChartSection(
                                 verticalArrangement = Arrangement.Center
                             ) {
                                 Spacer(modifier = Modifier.height(20.dp))
-                                
+
                                 Text(
                                     text = "나의 타입 현황",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onBackground
                                 )
-                                
+
                                 Spacer(modifier = Modifier.height(10.dp))
-                                
+
                                 // 큰 도넛 차트 (위로 올림)
                                 Box(
                                     modifier = Modifier.offset(y = (-20).dp) // 위로 20dp 올림
@@ -526,9 +1066,9 @@ private fun LargeStatusChartSection(
                                         typeChartData = state.dashboardData.typeChart
                                     )
                                 }
-                                
+
                                 Spacer(modifier = Modifier.height(10.dp))
-                                
+
                                 // 범례 (위로 올림)
                                 Box(
                                     modifier = Modifier.offset(y = (-15).dp) // 위로 15dp 올림
@@ -544,13 +1084,13 @@ private fun LargeStatusChartSection(
                                         }
                                     }
                                 }
-                                
+
                                 Spacer(modifier = Modifier.weight(1f))
                             }
                         }
                     }
                 }
-                
+
                 // 페이지 인디케이터 (하단 점)
                 Row(
                     modifier = Modifier
@@ -563,9 +1103,9 @@ private fun LargeStatusChartSection(
                             modifier = Modifier
                                 .size(10.dp)
                                 .background(
-                                    color = if (pagerState.currentPage == iteration) 
-                                        Color(0xFF6366F1) 
-                                    else 
+                                    color = if (pagerState.currentPage == iteration)
+                                        Color(0xFF6366F1)
+                                    else
                                         Color(0xFFE5E7EB),
                                     shape = CircleShape
                                 )
@@ -603,7 +1143,7 @@ private fun StatusCard(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface
             )
-            
+
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -631,7 +1171,7 @@ private fun StatusChart() {
             val center = Offset(size.width / 2, size.height / 2)
             val radius = 25f
             val strokeWidth = 8f
-            
+
             // 배경 원
             drawCircle(
                 color = Color(0xFFE5E7EB),
@@ -639,7 +1179,7 @@ private fun StatusChart() {
                 center = center,
                 style = Stroke(width = strokeWidth)
             )
-            
+
             // 등록 상태 (빨간색) - 40%
             val registeredAngle = 144f // 360 * 0.4
             drawArc(
@@ -651,7 +1191,7 @@ private fun StatusChart() {
                 size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2),
                 style = Stroke(width = strokeWidth)
             )
-            
+
             // 확인 상태 (초록색) - 20%
             val confirmedAngle = 72f // 360 * 0.2
             drawArc(
@@ -681,8 +1221,8 @@ private fun LargeStatusChart(
         ) {
             val center = Offset(size.width / 2, size.height / 2)
             val radius = 120f // 100f -> 120f로 크게
-            val strokeWidth = 30f // 25f -> 30f로 두껋게
-            
+            val strokeWidth = 30f // 25f -> 30f로 두껍게
+
             // 배경 원
             drawCircle(
                 color = Color(0xFFE5E7EB),
@@ -690,15 +1230,15 @@ private fun LargeStatusChart(
                 center = center,
                 style = Stroke(width = strokeWidth)
             )
-            
+
             if (statusChartData.isNotEmpty()) {
                 val totalCount = statusChartData.sumOf { it.count }
                 var currentAngle = -90f
-                
+
                 statusChartData.forEach { statusData ->
                     val percentage = if (totalCount > 0) statusData.count.toFloat() / totalCount else 0f
                     val sweepAngle = percentage * 360f
-                    
+
                     if (sweepAngle > 0) {
                         drawArc(
                             color = Color(android.graphics.Color.parseColor(statusData.color)),
@@ -742,8 +1282,8 @@ private fun LargeTypeChart(
         ) {
             val center = Offset(size.width / 2, size.height / 2)
             val radius = 120f // 100f -> 120f로 크게
-            val strokeWidth = 30f // 25f -> 30f로 두껋게
-            
+            val strokeWidth = 30f // 25f -> 30f로 두껍게
+
             // 배경 원
             drawCircle(
                 color = Color(0xFFE5E7EB),
@@ -751,15 +1291,15 @@ private fun LargeTypeChart(
                 center = center,
                 style = Stroke(width = strokeWidth)
             )
-            
+
             if (typeChartData.isNotEmpty()) {
                 val totalCount = typeChartData.sumOf { it.count }
                 var currentAngle = -90f
-                
+
                 typeChartData.forEach { typeData ->
                     val percentage = if (totalCount > 0) typeData.count.toFloat() / totalCount else 0f
                     val sweepAngle = percentage * 360f
-                    
+
                     if (sweepAngle > 0) {
                         drawArc(
                             color = Color(android.graphics.Color.parseColor(typeData.color)),
@@ -802,7 +1342,7 @@ private fun TypeChart() {
             val center = Offset(size.width / 2, size.height / 2)
             val radius = 25f
             val strokeWidth = 8f
-            
+
             // 배경 원
             drawCircle(
                 color = Color(0xFFE5E7EB),
@@ -810,7 +1350,7 @@ private fun TypeChart() {
                 center = center,
                 style = Stroke(width = strokeWidth)
             )
-            
+
             // 버그 타입 (빨간색) - 100%
             drawArc(
                 color = Color(0xFFEF4444),
@@ -866,7 +1406,7 @@ fun HomeContentPreview() {
                 currentDate = "2025-01-23",
                 onTaskClick = {}
             )
-            
+
             LargeStatusChartSection(
                 state = HomeState(),
                 onStatusClick = {},
@@ -910,7 +1450,7 @@ fun ProjectDropdown(
     onProjectSelected: (com.example.domain.model.home.Project) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    
+
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
@@ -931,7 +1471,7 @@ fun ProjectDropdown(
                 .fillMaxWidth(),
             label = { Text("프로젝트") }
         )
-        
+
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
@@ -969,15 +1509,15 @@ fun HomeScreenPreview() {
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
-                
+
                 Icon(
                     imageVector = Icons.Default.Refresh,
                     contentDescription = "새로고침"
                 )
             }
-            
+
             Divider()
-            
+
             // 콘텐츠 프리뷰
             HomeContentPreview()
         }
