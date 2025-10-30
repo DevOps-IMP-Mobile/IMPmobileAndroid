@@ -64,7 +64,8 @@ interface IssueApiService {
         @Query("sp_uid") spUid: String,
         @Query("project_no") projectNo: String,
         @Query("charger") charger: String? = null,
-        @Query("chargerName") chargerName: String? = null
+        @Query("chargerName") chargerName: String? = null,
+        @Query("issue_state_id") issueStateId: String? = null
     ): IssueCrudResponse
     
     // 이슈 삭제

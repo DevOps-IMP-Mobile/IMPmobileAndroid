@@ -20,6 +20,11 @@ data class IssueDto(
     @SerializedName("chargerName") val chargerName: String,
     @SerializedName("crtrDtYYYYMMDD") val crtrDtYYYYMMDD: String,
     @SerializedName("endDt") val endDt: String,
-    @SerializedName("isn") val isn: String
+    @SerializedName("isn") val isn: String,
+
+    @SerializedName("issueTypeId") val issueTypeId: String,
+    @SerializedName("issueStateId") val issueStateId: String,
     // 필요한 필드 추가 가능
+    @SerializedName("priorityCd") val priorityCd: String,
+    @SerializedName("importanceCd") val importanceCd: String,          // ⭐ 필수!
 ) 
