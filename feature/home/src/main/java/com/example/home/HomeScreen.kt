@@ -1,5 +1,6 @@
 package com.example.home
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
@@ -15,6 +16,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -75,6 +79,10 @@ fun HomeScreen(
                 }
                 is HomeEffect.ShowRefreshComplete -> {
                     // TODO: 새로고침 완료 메시지
+                }
+                // 🆕 추가
+                is HomeEffect.ShowStatusUpdateSuccess -> {
+                    // TODO: 성공 메시지 스낵바 표시
                 }
             }
         }
@@ -141,6 +149,17 @@ fun HomeScreen(
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
+                                IconButton(
+                                    onClick = {
+                                        viewModel.handleIntent(HomeIntent.OpenUnifiedSheet)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star, // 통합 아이콘
+                                        contentDescription = "통합 일정",
+                                        tint = Color(0xFFFFD700) // 금색
+                                    )
+                                }
                                 // 캘린더 아이콘 버튼 (최근 이슈 조회)
                                 IconButton(
                                     onClick = {
@@ -169,9 +188,72 @@ fun HomeScreen(
                                         )
                                     }
                                 }
+
                             }
                         }
 
+// 통합 일정 BottomSheet
+                        if (state.isUnifiedSheetOpen) {
+                            UnifiedBottomSheet(
+                                items = state.unifiedItems,
+                                isLoading = state.isLoadingUnifiedItems,
+                                selectedSources = state.selectedSources,
+                                onSourceToggle = { source ->
+                                    viewModel.handleIntent(HomeIntent.ToggleSource(source))
+                                },
+                                onDismiss = {
+                                    viewModel.handleIntent(HomeIntent.CloseUnifiedSheet)
+                                },
+                                sheetState = rememberModalBottomSheetState()
+                            )
+                        }
+// HomeScreen.kt의 210-220번 줄 근처
+                        if (state.showStatusChangeDialog && state.selectedIssue != null) {
+                            IssueStatusChangeDialog(
+                                issue = state.selectedIssue!!,
+                                onStatusSelected = { newStatus ->
+                                    if (newStatus == com.example.domain.model.issue.IssueStatus.CLOSED) {
+                                        viewModel.handleIntent(HomeIntent.ConfirmCompleteIssue(state.selectedIssue!!))
+                                    } else {
+                                        // ✅ enum name을 사용하여 상태 업데이트
+                                        viewModel.handleIntent(
+                                            HomeIntent.UpdateIssueStatus(
+                                                state.selectedIssue!!,
+                                                newStatus.name
+                                            )
+                                        )
+                                    }
+                                },
+                                onDismiss = {
+                                    viewModel.handleIntent(HomeIntent.CancelStatusChange)
+                                }
+                            )
+                        }
+
+                        // 🆕 완료 확인 다이얼로그
+                        if (state.showCompleteConfirmDialog && state.selectedIssue != null) {
+                            IssueCompleteConfirmDialog(
+                                issue = state.selectedIssue!!,
+                                onConfirm = {
+                                    viewModel.handleIntent(HomeIntent.CompleteIssue(state.selectedIssue!!))
+                                },
+                                onDismiss = {
+                                    viewModel.handleIntent(HomeIntent.CancelCompleteIssue)
+                                }
+                            )
+                        }
+
+                        // 🆕 로딩 오버레이
+                        if (state.isUpdatingStatus) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color.Black.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
                         // 선택된 프로젝트 표시
                         if (state.dashboardData.selectedProject != null) {
                             Card(
@@ -222,6 +304,9 @@ fun HomeScreen(
                     RecentIssuesBottomSheet(
                         issues = state.recentIssues,
                         isLoading = state.isLoadingRecentIssues,
+                        onIssueClick = { issue -> // ✅ 추가
+                            viewModel.handleIntent(HomeIntent.SelectIssueForStatusChange(issue))
+                        },
                         onDismiss = {
                             viewModel.handleIntent(HomeIntent.CloseRecentIssuesSheet)
                         },
@@ -356,11 +441,13 @@ fun ProjectDrawerContent(
 }
 
 // 최근 이슈 BottomSheet
+// 최근 이슈 BottomSheet
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentIssuesBottomSheet(
     issues: List<com.example.domain.model.issue.Issue>,
     isLoading: Boolean,
+    onIssueClick: (com.example.domain.model.issue.Issue) -> Unit, // ✅ 파라미터 추가
     onDismiss: () -> Unit,
     sheetState: SheetState
 ) {
@@ -390,7 +477,7 @@ fun RecentIssuesBottomSheet(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "총 ${issues.size}개",
+                        text = "총 ${issues.size}개 • 클릭하여 상태 변경",
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -445,20 +532,30 @@ fun RecentIssuesBottomSheet(
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     items(issues) { issue ->
-                        IssueItemCard(issue = issue)
+                        IssueItemCard(
+                            issue = issue,
+                            onClick = { onIssueClick(issue) } // ✅ onClick 전달
+                        )
                     }
                 }
             }
         }
     }
 }
-
 // 이슈 아이템 카드
 // 이슈 아이템 카드
+// 이슈 아이템 카드 (개선된 날짜 중심 버전)
+// 이슈 아이템 카드 (클릭 가능)
+// 이슈 아이템 카드 (클릭 가능)
 @Composable
-fun IssueItemCard(issue: com.example.domain.model.issue.Issue) {
+fun IssueItemCard(
+    issue: com.example.domain.model.issue.Issue,
+    onClick: () -> Unit // ✅ 타입 명시
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }, // 클릭 가능
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -593,7 +690,7 @@ fun IssueItemCard(issue: com.example.domain.model.issue.Issue) {
 
             Divider(color = MaterialTheme.colorScheme.outlineVariant)
 
-            // 메타 정보 (한 줄로)
+            // 메타 정보 + 클릭 힌트
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -641,22 +738,29 @@ fun IssueItemCard(issue: com.example.domain.model.issue.Issue) {
                     }
                 }
 
-                // 우측: 담당자
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                // 우측: 클릭 힌트
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                    Text(
-                        text = issue.assigneeName ?: "미지정",
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = "상태 변경",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }
@@ -1522,4 +1626,634 @@ fun HomeScreenPreview() {
             HomeContentPreview()
         }
     }
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UnifiedBottomSheet(
+    items: List<com.example.domain.model.unified.UnifiedItem>,
+    isLoading: Boolean,
+    selectedSources: List<com.example.domain.model.unified.ItemSource>,
+    onSourceToggle: (com.example.domain.model.unified.ItemSource) -> Unit,
+    onDismiss: () -> Unit,
+    sheetState: SheetState
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 700.dp)
+                .padding(horizontal = 16.dp)
+        ) {
+            // 헤더
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "통합 일정",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "총 ${items.size}개",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "닫기"
+                    )
+                }
+            }
+
+            // 소스 필터 칩
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                com.example.domain.model.unified.ItemSource.values().forEach { source ->
+                    FilterChip(
+                        selected = source in selectedSources,
+                        onClick = { onSourceToggle(source) },
+                        label = {
+                            Text(
+                                text = source.displayName,
+                                fontSize = 12.sp
+                            )
+                        },
+                        leadingIcon = {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .background(
+                                        color = Color(android.graphics.Color.parseColor(source.colorHex)),
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    )
+                }
+            }
+
+            Divider(modifier = Modifier.padding(bottom = 16.dp))
+
+            // 내용
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else if (items.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                        Text(
+                            text = "선택한 기간에 일정이 없습니다",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(items) { item ->
+                        UnifiedItemCard(item = item)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 통합 아이템 카드
+@Composable
+fun UnifiedItemCard(item: com.example.domain.model.unified.UnifiedItem) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // 소스 배지 + 제목
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    // 소스 배지
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = Color(android.graphics.Color.parseColor(item.source.colorHex))
+                    ) {
+                        Text(
+                            text = item.source.displayName,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    // 제목
+                    Text(
+                        text = item.title,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                // 상태
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color(android.graphics.Color.parseColor(item.status.colorHex))
+                ) {
+                    Text(
+                        text = item.status.displayName,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
+            }
+
+            Divider(color = MaterialTheme.colorScheme.outlineVariant)
+
+            // 날짜 정보
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 시작일
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "시작",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Text(
+                            text = item.startDate,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+
+                Icon(
+                    imageVector = Icons.Default.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                )
+
+                // 종료일
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                text = "종료",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f),
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                        Text(
+                            text = item.endDate,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    }
+                }
+            }
+
+            // 타입별 추가 정보
+            when (item) {
+                is com.example.domain.model.unified.UnifiedItem.AppIssue -> {
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = item.issueType,
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = item.assignee ?: "미지정",
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
+                is com.example.domain.model.unified.UnifiedItem.GoogleEvent -> {
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                    // 지역 변수로 할당
+                    val meetLink = item.meetingLink
+                    val eventLocation = item.location
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        // Google Meet 링크
+                        if (meetLink != null) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Call,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = Color(0xFF4285F4)
+                                )
+                                Text(
+                                    text = "Google Meet",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF4285F4),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        // 위치
+                        if (eventLocation != null) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Place,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = eventLocation,
+                                    fontSize = 12.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+                is com.example.domain.model.unified.UnifiedItem.NotionTask -> {
+                    Divider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.List,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        Text(
+                            text = item.databaseName,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+// 상태 변경 다이얼로그
+@Composable
+fun IssueStatusChangeDialog(
+    issue: com.example.domain.model.issue.Issue,
+    onStatusSelected: (com.example.domain.model.issue.IssueStatus) -> Unit, // ✅ String → IssueStatus
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(
+                    text = "이슈 상태 변경",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = issue.title,
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "변경할 상태를 선택하세요",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+
+                // 현재 상태
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "현재:",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = Color(android.graphics.Color.parseColor(issue.status.colorHex))
+                        ) {
+                            Text(
+                                text = issue.status.displayName,
+                                fontSize = 12.sp,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+
+                Divider()
+
+                // 상태 버튼들 (enum 사용)
+                com.example.domain.model.issue.IssueStatus.values().forEach { status ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                onStatusSelected(status)
+                                // onDismiss는 ViewModel에서 자동으로 처리됨
+                            },
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        border = BorderStroke(1.dp, Color(android.graphics.Color.parseColor(status.colorHex))),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = status.displayName,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .background(
+                                        color = Color(android.graphics.Color.parseColor(status.colorHex)),
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("취소")
+            }
+        }
+    )
+}
+
+// 완료 확인 다이얼로그
+@Composable
+fun IssueCompleteConfirmDialog(
+    issue: com.example.domain.model.issue.Issue,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.CheckCircle,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = Color(0xFF4CAF50)
+            )
+        },
+        title = {
+            Text(
+                text = "이슈를 완료하시겠습니까?",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = issue.title,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = Color(android.graphics.Color.parseColor(issue.priority.colorHex))
+                            ) {
+                                Text(
+                                    text = issue.priority.displayName,
+                                    fontSize = 11.sp,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                )
+                            }
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = MaterialTheme.colorScheme.secondary
+                            ) {
+                                Text(
+                                    text = issue.type.displayName,
+                                    fontSize = 11.sp,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Text(
+                    text = "완료된 이슈는 최근 이슈 목록에서 제거됩니다.",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50)
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("완료")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text("취소")
+            }
+        }
+    )
 }

@@ -19,7 +19,11 @@ data class Issue(
     val dueDate: String,
     val updatedDate: String? = null,
     val repository: String,
-    val projectId: String
+    val projectId: String,
+    val typeId: String,              // API 이슈 타입 ID
+    val statusId: String,            // API 상태 ID
+    val priorityCd: String,          // API 우선순위 코드
+    val importanceCd: String      // API 중요도 코드
 )
 
 /**

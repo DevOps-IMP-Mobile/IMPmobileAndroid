@@ -99,6 +99,8 @@ android {
         implementation(project(":core:data")) // data 모듈 추가
         implementation(project(":feature:login"))
         implementation(project(":feature:home"))
+        implementation(project(":core:domain"))  // ✅ 이 줄 추가!
+        implementation(project(":core:database")) // ✅ 이것도 추가 (FcmRepository 사용)
         implementation(project(":feature:project"))
         implementation(project(":feature:issue"))
         implementation(project(":feature:profile"))
@@ -106,5 +108,6 @@ android {
         // firebase BOM
         implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
         implementation("com.google.firebase:firebase-analytics")
+        implementation("com.google.firebase:firebase-messaging")
     }
 }

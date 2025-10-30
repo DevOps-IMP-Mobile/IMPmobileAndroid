@@ -3,6 +3,7 @@ package com.example.database.di
 import android.content.Context
 import androidx.room.Room
 import com.example.database.AppDatabase
+import com.example.database.dao.FcmTokenDao
 import com.example.database.dao.UserDao
 import dagger.Module
 import dagger.Provides
@@ -24,9 +25,18 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             AppDatabase.DATABASE_NAME
-        ).build()
+        )
+            .fallbackToDestructiveMigration() // 개발 중에만 사용
+            .build()
     }
 
     @Provides
-    fun provideUserDao(database: AppDatabase): UserDao = database.userDao()
+    fun provideUserDao(database: AppDatabase): UserDao {
+        return database.userDao()
+    }
+
+    @Provides
+    fun provideFcmTokenDao(database: AppDatabase): FcmTokenDao {
+        return database.fcmTokenDao()
+    }
 }

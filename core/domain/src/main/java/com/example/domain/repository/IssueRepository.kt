@@ -34,7 +34,9 @@ interface IssueRepository {
         importanceCd: String,
         startDate: String,
         endDate: String,
-        projectNo: String
+        projectNo: String,
+        statusCd: String? = null  // ✅ 추가
+
     ): Result<Boolean>
 
     // 이슈 삭제

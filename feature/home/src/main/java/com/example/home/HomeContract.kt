@@ -5,10 +5,9 @@ import com.example.domain.base.UiState
 import com.example.domain.base.UiEffect
 import com.example.domain.model.home.DashboardData
 import com.example.domain.model.issue.Issue
+import com.example.domain.model.unified.UnifiedItem
+import com.example.domain.model.unified.ItemSource
 
-/**
- * Home 화면의 Intent (사용자 액션)
- */
 sealed class HomeIntent : UiIntent {
     object LoadDashboard : HomeIntent()
     object RefreshDashboard : HomeIntent()
@@ -17,40 +16,55 @@ sealed class HomeIntent : UiIntent {
     object NavigateToTypeDetail : HomeIntent()
     data class SelectProject(val project: com.example.domain.model.home.Project) : HomeIntent()
 
-    // 새로 추가: Drawer 관련
     object OpenDrawer : HomeIntent()
     object CloseDrawer : HomeIntent()
 
-    // 새로 추가: 최근 이슈 BottomSheet 관련
     object OpenRecentIssuesSheet : HomeIntent()
     object CloseRecentIssuesSheet : HomeIntent()
     object LoadRecentIssues : HomeIntent()
+
+    object OpenUnifiedSheet : HomeIntent()
+    object CloseUnifiedSheet : HomeIntent()
+    object LoadUnifiedItems : HomeIntent()
+    data class ToggleSource(val source: ItemSource) : HomeIntent()
+
+    // 🆕 이슈 상태 관리
+    data class SelectIssueForStatusChange(val issue: Issue) : HomeIntent()
+    object CancelStatusChange : HomeIntent()
+    data class UpdateIssueStatus(val issue: Issue, val newStatusCode: String) : HomeIntent()
+    data class ConfirmCompleteIssue(val issue: Issue) : HomeIntent()
+    object CancelCompleteIssue : HomeIntent()
+    data class CompleteIssue(val issue: Issue) : HomeIntent()
 }
 
-/**
- * Home 화면의 State (UI 상태)
- */
 data class HomeState(
     val isLoading: Boolean = false,
     val dashboardData: DashboardData = DashboardData(),
     val error: String? = null,
 
-    // 새로 추가: Drawer 상태
     val isDrawerOpen: Boolean = false,
 
-    // 새로 추가: BottomSheet 상태
     val isRecentIssuesSheetOpen: Boolean = false,
     val recentIssues: List<Issue> = emptyList(),
-    val isLoadingRecentIssues: Boolean = false
+    val isLoadingRecentIssues: Boolean = false,
+
+    val isUnifiedSheetOpen: Boolean = false,
+    val unifiedItems: List<UnifiedItem> = emptyList(),
+    val isLoadingUnifiedItems: Boolean = false,
+    val selectedSources: List<ItemSource> = ItemSource.values().toList(),
+
+    // 🆕 상태 변경 관련
+    val selectedIssue: Issue? = null,
+    val showStatusChangeDialog: Boolean = false,
+    val showCompleteConfirmDialog: Boolean = false,
+    val isUpdatingStatus: Boolean = false
 ) : UiState
 
-/**
- * Home 화면의 Effect (일회성 이벤트)
- */
 sealed class HomeEffect : UiEffect {
     object NavigateToTaskList : HomeEffect()
     object NavigateToStatusChart : HomeEffect()
     object NavigateToTypeChart : HomeEffect()
     data class ShowError(val message: String) : HomeEffect()
     object ShowRefreshComplete : HomeEffect()
+    data class ShowStatusUpdateSuccess(val message: String) : HomeEffect()
 }

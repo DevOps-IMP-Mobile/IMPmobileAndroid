@@ -58,10 +58,19 @@ class IssueRepositoryImpl @Inject constructor(
                     id = dto.issueUid,
                     title = dto.issueName.ifEmpty { "제목 없음" },
                     description = "",
+
+                    // 화면 표시용 enum
                     type = mapIssueType(dto.issueTypeName),
                     status = mapIssueStatus(dto.issueStateName),
                     priority = mapIssuePriority(dto.priority),
                     importance = mapIssueImportance(dto.importance),
+
+                    // ✅ 실제 API ID/코드 추가
+                    typeId = dto.issueTypeId,          // API 응답의 실제 타입 ID
+                    statusId = dto.issueStateId,           // API 응답의 실제 상태 ID
+                    priorityCd = dto.priorityCd,           // API 응답의 실제 우선순위 코드
+                    importanceCd = dto.importanceCd,       // API 응답의 실제 중요도 코드
+
                     assigneeId = "",
                     assigneeName = dto.chargerName,
                     reporterId = "",
@@ -126,10 +135,18 @@ class IssueRepositoryImpl @Inject constructor(
                         id = dto.issueUid,
                         title = dto.issueName.ifEmpty { "제목 없음" },
                         description = "",
+
                         type = mapIssueType(dto.issueTypeName),
                         status = mapIssueStatus(dto.issueStateName),
                         priority = mapIssuePriority(dto.priority),
                         importance = mapIssueImportance(dto.importance),
+
+                        // ✅ 실제 API ID/코드 추가
+                        typeId = dto.issueTypeId,
+                        statusId = dto.issueStateId,
+                        priorityCd = dto.priorityCd,
+                        importanceCd = dto.importanceCd,
+
                         assigneeId = "",
                         assigneeName = dto.chargerName,
                         reporterId = "",
@@ -220,7 +237,8 @@ class IssueRepositoryImpl @Inject constructor(
         importanceCd: String,
         startDate: String,
         endDate: String,
-        projectNo: String
+        projectNo: String,
+        statusCd: String?
     ): Result<Boolean> {
         return try {
             Log.d("IssueAPI", "=== 이슈 수정 API 호출 시작 ===")
@@ -264,7 +282,8 @@ class IssueRepositoryImpl @Inject constructor(
                 spUid = ctx.spUid ?: "",
                 projectNo = projectNo,
                 charger = ctx.userId ?: "",
-                chargerName = ctx.userName ?: ""
+                chargerName = ctx.userName ?: "",
+                issueStateId = statusCd  // ✅ 추가 (API가 issue_state_id로 받는다고 가정)
             )
 
             Log.d("IssueAPI", "이슈 수정 성공 - cnt: ${response.list.firstOrNull()?.cnt}")

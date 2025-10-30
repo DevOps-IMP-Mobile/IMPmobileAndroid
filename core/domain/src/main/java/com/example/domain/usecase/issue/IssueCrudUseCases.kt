@@ -39,20 +39,23 @@ class UpdateIssueUseCase @Inject constructor(
         importanceCd: String,
         startDate: String,
         endDate: String,
-        projectNo: String
-    ) = issueRepository.updateIssue(
-        issueId = issueId,
-        title = title,
-        description = description,
-        typeId = typeId,
-        priorityCd = priorityCd,
-        importanceCd = importanceCd,
-        startDate = startDate,
-        endDate = endDate,
-        projectNo = projectNo
-    )
+        projectNo: String,
+        statusCd: String? = null  // ✅ 추가 (optional)
+    ): Result<Boolean> {
+        return issueRepository.updateIssue(
+            issueId = issueId,
+            title = title,
+            description = description,
+            typeId = typeId,
+            priorityCd = priorityCd,
+            importanceCd = importanceCd,
+            startDate = startDate,
+            endDate = endDate,
+            projectNo = projectNo,
+            statusCd = statusCd  // ✅ 전달
+        )
+    }
 }
-
 class DeleteIssueUseCase @Inject constructor(
     private val issueRepository: IssueRepository
 ) {
