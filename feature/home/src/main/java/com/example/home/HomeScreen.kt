@@ -33,7 +33,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
-
+import android.Manifest
+import android.os.Build
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import android.util.Log
+import androidx.lifecycle.viewmodel.compose.viewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -44,7 +52,36 @@ fun HomeScreen(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val bottomSheetState = rememberModalBottomSheetState()
+    val context = LocalContext.current
 
+    // 알림 권한 요청 Launcher
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            Log.d("Permission", "알림 권한이 허용되었습니다")
+        } else {
+            Log.d("Permission", "알림 권한이 거부되었습니다")
+        }
+    }
+
+    // 앱 실행 시 한 번만 권한 요청
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = Manifest.permission.POST_NOTIFICATIONS
+            when {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    Log.d("Permission", "알림 권한이 이미 허용되어 있습니다")
+                }
+                else -> {
+                    notificationPermissionLauncher.launch(permission)
+                }
+            }
+        }
+    }
     // Drawer 상태 동기화
     LaunchedEffect(state.isDrawerOpen) {
         if (state.isDrawerOpen) {

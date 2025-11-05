@@ -14,10 +14,11 @@ import kotlinx.coroutines.flow.flow
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
-
+import com.example.data.notification.IssueNotificationManager
 class IssueRepositoryImpl @Inject constructor(
     private val issueApi: IssueApiService,
-    private val codeApi: CodeApiService
+    private val codeApi: CodeApiService,
+    private val notificationManager: IssueNotificationManager
 ) : IssueRepository {
 
     override suspend fun getIssueList(
@@ -218,6 +219,19 @@ class IssueRepositoryImpl @Inject constructor(
 
             val success = response.list.firstOrNull()?.cnt == 1
             if (success) {
+                // ✅ 알림 코드
+                try {
+                    val priority = mapIssuePriorityFromCode(priorityCd)
+                    notificationManager.showIssueCreatedNotification(
+                        issueId = title,
+                        issueTitle = title,
+                        priority = priority,
+                        projectName = null
+                    )
+                    Log.d("IssueAPI", "이슈 생성 알림 표시 완료")
+                } catch (e: Exception) {
+                    Log.e("IssueAPI", "알림 표시 실패: ${e.message}")
+                }
                 Result.success(true)
             } else {
                 Result.failure(Exception("이슈 등록 실패"))
@@ -447,6 +461,18 @@ class IssueRepositoryImpl @Inject constructor(
             "낮음" -> IssueImportance.LOW
             null, "" -> IssueImportance.NORMAL
             else -> IssueImportance.NORMAL
+        }
+    }
+    /**
+     * 우선순위 코드를 IssuePriority enum으로 변환
+     */
+    private fun mapIssuePriorityFromCode(priorityCode: String): IssuePriority {
+        return when (priorityCode) {
+            "001" -> IssuePriority.CRITICAL  // 긴급
+            "002" -> IssuePriority.HIGH      // 높음
+            "003" -> IssuePriority.NORMAL    // 보통
+            "004" -> IssuePriority.LOW       // 낮음
+            else -> IssuePriority.NORMAL     // 기본값
         }
     }
 }
