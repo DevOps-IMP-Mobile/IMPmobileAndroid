@@ -85,7 +85,6 @@ class IssueNotificationManager @Inject constructor(
      * @param priority 우선순위
      * @param projectName 프로젝트명 (선택)
      */
-
     @SuppressLint("MissingPermission")
     fun showIssueCreatedNotification(
         issueId: String,
@@ -133,7 +132,7 @@ class IssueNotificationManager @Inject constructor(
             .setContentIntent(pendingIntent)
             .build()
 
-        val i: Int = try {
+        try {
             NotificationManagerCompat.from(context).notify(
                 getNotificationId(issueId),
                 notification
@@ -160,11 +159,18 @@ class IssueNotificationManager @Inject constructor(
 
     /**
      * 이슈 상세 화면으로 이동하는 Intent 생성
-     * TODO: 실제 IssueDetailActivity로 연결 필요
+     * 알림 클릭 시 앱의 메인 화면으로 이동
      */
     private fun createIssueDetailIntent(issueId: String): Intent {
-        // 현재는 MainActivity로 이동 (나중에 실제 화면으로 변경)
-        val intent = Intent(context, Class.forName("com.example.impmobileandroid.MainActivity"))
+        // 앱의 런처 Activity를 찾아서 열기 (패키지명에 관계없이 작동)
+        val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+            ?: Intent().apply {
+                action = Intent.ACTION_MAIN
+                addCategory(Intent.CATEGORY_LAUNCHER)
+                setPackage(context.packageName)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         intent.putExtra("issue_id", issueId)
         intent.putExtra("navigate_to", "issue_detail")
