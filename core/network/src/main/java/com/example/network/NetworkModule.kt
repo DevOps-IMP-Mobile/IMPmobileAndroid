@@ -3,6 +3,7 @@ package com.example.network
 import com.example.domain.repository.AuthRepository
 import com.example.domain.manager.TokenManager
 import com.example.network.api.AuthApiService
+import com.example.network.api.AwsIssueApiService
 import com.example.network.api.DashboardApiService
 import com.example.network.api.ProjectApiService
 import com.example.network.api.IssueApiService
@@ -20,6 +21,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
+import kotlin.jvm.java
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -28,6 +30,10 @@ object NetworkModule {
     private const val BASE_URL = "http://coverdreamit.iptime.org:8401/portal/"
     private const val DASHBOARD_BASE_URL = "http://coverdreamit.iptime.org:8402/"
     private const val CODE_BASE_URL = "http://coverdreamit.iptime.org:8401/portal/"
+
+    private const val UNIFIED_AWS_BASE_URL = "http://spring-env.eba-mdpim7pd.ap-southeast-2.elasticbeanstalk.com/"
+
+    private const val AWS_BASE_URL = "http://spring-env.eba-mdpim7pd.ap-southeast-2.elasticbeanstalk.com/"
 
     @Provides
     @Singleton
@@ -126,4 +132,47 @@ object NetworkModule {
     ): IssueApiService {
         return dashboardRetrofit.create(IssueApiService::class.java)
     }
+
+    @Provides
+    @Singleton
+    @Named("aws")
+    fun provideAwsRetrofit(
+        okHttpClient: OkHttpClient
+    ): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(AWS_BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+//
+    // ⭐ AWS Issue API Service
+    @Provides
+    @Singleton
+    @Named("aws_issue")
+    fun provideAwsIssueApiService(
+        @Named("aws") awsRetrofit: Retrofit
+    ): AwsIssueApiService {
+        return awsRetrofit.create(AwsIssueApiService::class.java)
+    }
+//
+//    // ⭐ AWS User API Service
+//    @Provides
+//    @Singleton
+//    @Named("aws_user")
+//    fun provideAwsUserApiService(
+//        @Named("aws") awsRetrofit: Retrofit
+//    ): AwsUserApiService {
+//        return awsRetrofit.create(AwsUserApiService::class.java)
+//    }
+//
+//    // ⭐ AWS Notification API Service
+//    @Provides
+//    @Singleton
+//    @Named("aws_notification")
+//    fun provideAwsNotificationApiService(
+//        @Named("aws") awsRetrofit: Retrofit
+//    ): AwsNotificationApiService {
+//        return awsRetrofit.create(AwsNotificationApiService::class.java)
+//    }
 }

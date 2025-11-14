@@ -188,6 +188,22 @@ fun HomeScreen(
                             ) {
                                 IconButton(
                                     onClick = {
+                                        viewModel.testAllAwsApis() // ⭐ 이 부분만 변경!
+                                        android.widget.Toast.makeText(
+                                            context,
+                                            "AWS API 테스트 중... Logcat 확인!",
+                                            android.widget.Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = "AWS 테스트",
+                                        tint = Color(0xFF4CAF50)
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
                                         viewModel.handleIntent(HomeIntent.OpenUnifiedSheet)
                                     }
                                 ) {
@@ -364,41 +380,78 @@ fun ProjectDrawerContent(
     onProjectSelected: (com.example.domain.model.home.Project) -> Unit,
     onClose: () -> Unit
 ) {
-    ModalDrawerSheet {
+    ModalDrawerSheet(
+        drawerContainerColor = Color(0xFFF5F7FA)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .width(300.dp)
+                .width(320.dp)
         ) {
-            // Drawer 헤더
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.primaryContainer
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "프로젝트 선택",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                    IconButton(onClick = onClose) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "닫기",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+            // ✨ 그라디언트 헤더
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFA27CEE), // 보라-파랑 시작
+                                Color(0xFFCBAAEF)  // 연보라
+                            )
                         )
+                    )
+                    .padding(24.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // 📁 아이콘 배경
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccountTree,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+
+                            Column {
+                                Text(
+                                    text = "프로젝트",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                                Text(
+                                    text = "${projects.size}개 진행중",
+                                    fontSize = 13.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
+                        }
+
+                        IconButton(onClick = onClose) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "닫기",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
-
-            Divider()
 
             // 프로젝트 목록
             if (projects.isEmpty()) {
@@ -406,75 +459,209 @@ fun ProjectDrawerContent(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "프로젝트가 없습니다",
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FolderOpen,
+                            contentDescription = null,
+                            tint = Color.Gray.copy(alpha = 0.5f),
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Text(
+                            text = "프로젝트가 없습니다",
+                            fontSize = 16.sp,
+                            color = Color.Gray.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(projects) { project ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onProjectSelected(project) },
-                            shape = RoundedCornerShape(8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (selectedProject?.projectNo == project.projectNo)
-                                    MaterialTheme.colorScheme.primaryContainer
-                                else
-                                    MaterialTheme.colorScheme.surface
-                            ),
-                            elevation = CardDefaults.cardElevation(
-                                defaultElevation = if (selectedProject?.projectNo == project.projectNo) 4.dp else 2.dp
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (selectedProject?.projectNo == project.projectNo)
-                                        Icons.Default.CheckCircle
-                                    else
-                                        Icons.Default.Build,
-                                    contentDescription = null,
-                                    tint = if (selectedProject?.projectNo == project.projectNo)
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                )
-                                Column {
-                                    Text(
-                                        text = project.projectName,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = if (selectedProject?.projectNo == project.projectNo)
-                                            MaterialTheme.colorScheme.onPrimaryContainer
-                                        else
-                                            MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        text = "번호: ${project.projectNo}",
-                                        fontSize = 12.sp,
-                                        color = if (selectedProject?.projectNo == project.projectNo)
-                                            MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                        else
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                    )
-                                }
-                            }
-                        }
+                        ProjectDrawerItem(
+                            project = project,
+                            isSelected = selectedProject?.projectNo == project.projectNo,
+                            onClick = { onProjectSelected(project) }
+                        )
                     }
                 }
             }
         }
     }
+}
+
+/**
+ * 개선된 프로젝트 아이템 카드
+ */
+@Composable
+private fun ProjectDrawerItem(
+    project: com.example.domain.model.home.Project,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val backgroundColor = if (isSelected) {
+        Color(0xFF667EEA).copy(alpha = 0.12f)
+    } else {
+        Color.White
+    }
+
+    val borderColor = if (isSelected) {
+        Color(0xFF667EEA)
+    } else {
+        Color.Transparent
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = backgroundColor
+        ),
+        border = if (isSelected) {
+            BorderStroke(2.dp, borderColor)
+        } else null,
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 4.dp else 2.dp
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // 🎨 프로젝트 아이콘 (색상별로 다르게)
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        getProjectColor(project.projectNo).copy(alpha = 0.15f),
+                        RoundedCornerShape(12.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = getProjectIcon(project.projectNo),
+                    contentDescription = null,
+                    tint = getProjectColor(project.projectNo),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            // 프로젝트 정보
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = project.projectName,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isSelected) Color(0xFF667EEA) else Color(0xFF2D3748),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // 프로젝트 번호 태그
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (isSelected)
+                            Color(0xFF667EEA).copy(alpha = 0.2f)
+                        else
+                            Color(0xFFE2E8F0)
+                    ) {
+                        Text(
+                            text = "#${project.projectNo}",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isSelected) Color(0xFF667EEA) else Color(0xFF718096),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+
+                    // 상태 인디케이터
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(Color(0xFF48BB78), CircleShape)
+                        )
+                        Text(
+                            text = "진행중",
+                            fontSize = 11.sp,
+                            color = Color(0xFF718096)
+                        )
+                    }
+                }
+            }
+
+            // 선택 체크 아이콘
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .background(Color(0xFF667EEA), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "선택됨",
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * 프로젝트 번호에 따라 다른 색상 반환
+ */
+private fun getProjectColor(projectNo: String): Color {
+    val colors = listOf(
+        Color(0xFF667EEA), // 보라-파랑
+        Color(0xFFED64A6), // 핑크
+        Color(0xFF48BB78), // 초록
+        Color(0xFFED8936), // 주황
+        Color(0xFF4299E1), // 파랑
+        Color(0xFF9F7AEA), // 보라
+        Color(0xFFECC94B), // 노랑
+        Color(0xFF38B2AC)  // 청록
+    )
+    return colors[projectNo.hashCode().mod(colors.size).let { if (it < 0) it + colors.size else it }]
+}
+
+/**
+ * 프로젝트 번호에 따라 다른 아이콘 반환
+ */
+private fun getProjectIcon(projectNo: String): androidx.compose.ui.graphics.vector.ImageVector {
+    val icons = listOf(
+        Icons.Default.AccountTree,
+        Icons.Default.FolderOpen,
+        Icons.Default.Build,
+        Icons.Default.Star,
+        Icons.Default.Favorite,
+        Icons.Default.Home,
+        Icons.Default.Phone,
+        Icons.Default.Email
+    )
+    return icons[projectNo.hashCode().mod(icons.size).let { if (it < 0) it + icons.size else it }]
 }
 
 // 최근 이슈 BottomSheet

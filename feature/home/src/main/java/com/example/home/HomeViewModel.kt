@@ -1,5 +1,8 @@
 package com.example.home
 
+import android.content.Context
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,13 +14,25 @@ import com.example.domain.model.issue.IssueSortType
 import com.example.domain.model.unified.ItemSource
 import com.example.data.local.CompletedIssuesManager  // ✅ 추가
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
-
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.withContext
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.logging.HttpLoggingInterceptor
+import java.net.HttpURLConnection
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+ import android.net.ConnectivityManager
+ import java.net.URL
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getDashboardDataUseCase: GetDashboardDataUseCase,
@@ -347,4 +362,218 @@ class HomeViewModel @Inject constructor(
             _effect.send(effect)
         }
     }
+    fun testAWSConnectionSimple() {
+        viewModelScope.launch {
+            Log.d("AWS_TEST", "========================================")
+            Log.d("AWS_TEST", "🚀 AWS 연결 테스트 시작")
+            Log.d("AWS_TEST", "========================================")
+
+            try {
+                withContext(Dispatchers.IO) {
+                    Log.d("AWS_TEST", "1️⃣ IO 스레드 진입 성공")
+
+                    val client = OkHttpClient.Builder()
+                        .connectTimeout(30, TimeUnit.SECONDS)
+                        .readTimeout(30, TimeUnit.SECONDS)
+                        .writeTimeout(30, TimeUnit.SECONDS)
+                        .retryOnConnectionFailure(true)
+                        .build()
+
+                    Log.d("AWS_TEST", "2️⃣ OkHttpClient 생성 완료")
+
+                    val url = "http://spring-env.eba-mdpim7pd.ap-southeast-2.elasticbeanstalk.com/"
+                    Log.d("AWS_TEST", "3️⃣ 접속 URL: $url")
+
+                    val request = Request.Builder()
+                        .url(url)
+                        .get()
+                        .addHeader("User-Agent", "Android-App")
+                        .build()
+
+                    Log.d("AWS_TEST", "4️⃣ Request 생성 완료")
+                    Log.d("AWS_TEST", "5️⃣ 서버에 요청 전송 중...")
+
+                    val response = client.newCall(request).execute()
+
+                    Log.d("AWS_TEST", "========================================")
+                    Log.d("AWS_TEST", "✅ 서버 응답 성공!")
+                    Log.d("AWS_TEST", "========================================")
+                    Log.d("AWS_TEST", "📊 응답 코드: ${response.code}")
+                    Log.d("AWS_TEST", "📊 응답 메시지: ${response.message}")
+                    Log.d("AWS_TEST", "📊 프로토콜: ${response.protocol}")
+
+                    val responseBody = response.body?.string()
+                    Log.d("AWS_TEST", "📄 응답 본문 길이: ${responseBody?.length ?: 0}")
+                    if (responseBody != null && responseBody.length < 500) {
+                        Log.d("AWS_TEST", "📄 응답 본문: $responseBody")
+                    } else if (responseBody != null) {
+                        Log.d("AWS_TEST", "📄 응답 본문 미리보기: ${responseBody.take(200)}...")
+                    }
+
+                    Log.d("AWS_TEST", "========================================")
+                    Log.d("AWS_TEST", "🎉 연결 테스트 완료!")
+                    Log.d("AWS_TEST", "========================================")
+
+                    response.close()
+                }
+            } catch (e: java.net.UnknownHostException) {
+                Log.e("AWS_TEST", "========================================")
+                Log.e("AWS_TEST", "❌ DNS 오류: 서버 주소를 찾을 수 없습니다")
+                Log.e("AWS_TEST", "💡 해결방법: 서버 URL이 올바른지 확인하세요")
+                Log.e("AWS_TEST", "에러: ${e.message}")
+                Log.e("AWS_TEST", "========================================")
+            } catch (e: java.net.SocketTimeoutException) {
+                Log.e("AWS_TEST", "========================================")
+                Log.e("AWS_TEST", "❌ 타임아웃: 서버가 응답하지 않습니다")
+                Log.e("AWS_TEST", "💡 해결방법: 서버가 실행 중인지 확인하세요")
+                Log.e("AWS_TEST", "에러: ${e.message}")
+                Log.e("AWS_TEST", "========================================")
+            } catch (e: java.net.ConnectException) {
+                Log.e("AWS_TEST", "========================================")
+                Log.e("AWS_TEST", "❌ 연결 실패: 서버에 연결할 수 없습니다")
+                Log.e("AWS_TEST", "💡 해결방법:")
+                Log.e("AWS_TEST", "  1. 서버가 실행 중인지 확인")
+                Log.e("AWS_TEST", "  2. 방화벽 설정 확인")
+                Log.e("AWS_TEST", "  3. 서버 포트 확인")
+                Log.e("AWS_TEST", "에러: ${e.message}")
+                Log.e("AWS_TEST", "========================================")
+            } catch (e: javax.net.ssl.SSLException) {
+                Log.e("AWS_TEST", "========================================")
+                Log.e("AWS_TEST", "❌ SSL 오류: HTTPS 인증서 문제")
+                Log.e("AWS_TEST", "에러: ${e.message}")
+                Log.e("AWS_TEST", "========================================")
+            } catch (e: java.io.IOException) {
+                Log.e("AWS_TEST", "========================================")
+                Log.e("AWS_TEST", "❌ IO 오류: 네트워크 문제")
+                Log.e("AWS_TEST", "💡 해결방법:")
+                Log.e("AWS_TEST", "  1. 인터넷 연결 확인")
+                Log.e("AWS_TEST", "  2. AndroidManifest.xml에 INTERNET 권한 확인")
+                Log.e("AWS_TEST", "  3. Cleartext traffic 설정 확인")
+                Log.e("AWS_TEST", "에러: ${e.message}")
+                Log.e("AWS_TEST", "========================================")
+                e.printStackTrace()
+            } catch (e: Exception) {
+                Log.e("AWS_TEST", "========================================")
+                Log.e("AWS_TEST", "❌ 알 수 없는 에러 발생!")
+                Log.e("AWS_TEST", "에러 타입: ${e.javaClass.simpleName}")
+                Log.e("AWS_TEST", "에러 메시지: ${e.message}")
+                Log.e("AWS_TEST", "========================================")
+                e.printStackTrace()
+            }
+        }
+    }
+    // ✅ HomeViewModel.kt에 추가할 수 있는 고급 테스트 함수
+
+    // 1️⃣ 네트워크 상태 확인
+    private fun isNetworkAvailable(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+            return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        } else {
+            @Suppress("DEPRECATION")
+            val networkInfo = connectivityManager.activeNetworkInfo
+            return networkInfo?.isConnected == true
+        }
+    }
+
+    // 2️⃣ Ping 테스트 (간단한 연결 확인)
+    fun testAWSPing() {
+        viewModelScope.launch {
+            Log.d("AWS_PING", "🏓 Ping 테스트 시작")
+
+            try {
+                withContext(Dispatchers.IO) {
+                    val url = URL("http://spring-env.eba-mdpim7pd.ap-southeast-2.elasticbeanstalk.com/")
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 5000
+                    connection.requestMethod = "HEAD"
+
+                    val responseCode = connection.responseCode
+                    Log.d("AWS_PING", "✅ Ping 성공: $responseCode")
+                    connection.disconnect()
+                }
+            } catch (e: Exception) {
+                Log.e("AWS_PING", "❌ Ping 실패: ${e.message}")
+            }
+        }
+    }
+
+    // 3️⃣ 다양한 엔드포인트 테스트
+    fun testMultipleEndpoints() {
+        viewModelScope.launch {
+            val endpoints = listOf(
+                "/",
+                "/health",
+                "/api/status",
+                "/actuator/health"
+            )
+
+            endpoints.forEach { endpoint ->
+                testEndpoint(endpoint)
+            }
+        }
+    }
+
+    private suspend fun testEndpoint(endpoint: String) {
+        withContext(Dispatchers.IO) {
+            try {
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(10, TimeUnit.SECONDS)
+                    .readTimeout(10, TimeUnit.SECONDS)
+                    .build()
+
+                val url = "http://spring-env.eba-mdpim7pd.ap-southeast-2.elasticbeanstalk.com$endpoint"
+                val request = Request.Builder().url(url).build()
+                val response = client.newCall(request).execute()
+
+                Log.d("AWS_TEST", "📍 $endpoint -> ${response.code} ${response.message}")
+                response.close()
+            } catch (e: Exception) {
+                Log.e("AWS_TEST", "📍 $endpoint -> ❌ ${e.message}")
+            }
+        }
+    }
+
+    // 4️⃣ 상세 로깅을 위한 OkHttp Interceptor
+    private fun createLoggingClient(): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor { message ->
+            Log.d("AWS_HTTP", message)
+        }.apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    // 5️⃣ POST 요청 테스트
+    fun testAWSPost() {
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    val client = OkHttpClient()
+                    val json = """{"test": "data"}"""
+                    val body = json.toRequestBody("application/json".toMediaType())
+
+                    val request = Request.Builder()
+                        .url("http://spring-env.eba-mdpim7pd.ap-southeast-2.elasticbeanstalk.com/api/test")
+                        .post(body)
+                        .build()
+
+                    val response = client.newCall(request).execute()
+                    Log.d("AWS_POST", "응답: ${response.code} ${response.body?.string()}")
+                    response.close()
+                }
+            } catch (e: Exception) {
+                Log.e("AWS_POST", "POST 오류: ${e.message}")
+            }
+        }
+    }
+
+
 }
